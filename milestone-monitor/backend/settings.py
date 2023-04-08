@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "milestone_monitor"
 ]
 
 MIDDLEWARE = [
@@ -87,7 +88,7 @@ DATABASES = {
         "NAME": pg_db,
         "USER": pg_user,
         "PASSWORD": pg_pass,
-        "HOST": "db",
+        "HOST": "localhost",
         "PORT": 5432,
     }
 }

@@ -28,5 +28,6 @@ import milestone_monitor.views as views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("sms/", views.test, name="send-message"),
-    path("receivesms/", views.receive_test, name="test-message")
+    path("receivesms/", views.receive_test, name="test-message"),
+    path("api/", views.print_goals_database, name="print-output")
 ]
