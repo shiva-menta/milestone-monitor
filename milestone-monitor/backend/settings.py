@@ -24,6 +24,11 @@ pg_pass = os.environ.get('POSTGRES_PASSWORD')
 pg_db = os.environ.get('POSTGRES_DB')
 redis_url = os.environ.get('REDIS_URL')
 
+# Celery Config
+CELERY_BROKER_URL = redis_url
+CELERY_RESULT_BACKEND = redis_url
+CELERY_TIMEZONE = 'US/Eastern'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 

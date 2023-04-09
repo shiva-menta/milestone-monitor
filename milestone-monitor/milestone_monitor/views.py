@@ -11,10 +11,11 @@ curr_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curr_dir)
 from utils.sms import send_sms
 from utils.interactions import create_goal
+from tasks import test_message
 
 # Create your views here.
 def test(request):
-    send_sms('+13028678414', 'Testing HTTP Message.')
+    test_message('+16307308169', "Testing Celery.")
     return HttpResponse("Text sent.")
 
 def receive_test(request):
