@@ -15,6 +15,7 @@ sys.path.insert(0, curr_dir)
 from utils.sms import send_sms
 from utils.interactions import create_goal
 from utils.chatbot import get_chatbot
+from utils.msg_hist import get_user_hist, update_user_convo_type
 
 # Create your views here.
 def test(request):
@@ -38,6 +39,13 @@ def print_goals_database(request):
     }
 
     return JsonResponse(context)
+
+def test_redis(request):
+    number = "6307308169"
+    data = update_user_convo_type(number, 'create_goal')
+
+    # return JsonResponse(data)
+    return HttpResponse("Completed.")
 
 
 # For interacting with the model
