@@ -10,6 +10,7 @@ from langchain.agents import tool, create_sql_agent
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.memory import ConversationBufferWindowMemory
 
+from utils.embeddings import create_embedding
 from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
 from utils.interactions import create_goal
 from utils.llm import BASE_LLM
@@ -59,6 +60,7 @@ def text_fields_to_json(fields: dict):
 
     return json.dumps({camel_case(key): value if value != 'N/A' else None for key, value in fields.items()}, default=str)
 
+# TODO: take SMS input
 @tool
 def conversational_create_goal_tool(query: str) -> str:
     '''
@@ -66,6 +68,11 @@ def conversational_create_goal_tool(query: str) -> str:
     '''
     user_input = query
     current_field_entries = None
+
+    # SET CURRENT CONVO TYPE TO CREATE GOAL
+
+
+    # QUERY CREATE GOAL MODEL
 
     while True:
         current_full_output = create_goal_chain.predict(input=user_input, today=datetime.now())
@@ -86,6 +93,7 @@ def conversational_create_goal_tool(query: str) -> str:
     # Parse current field entries here
     # and add them to the database
     fields_json = text_fields_to_json(current_field_entries)
+    goal_name_embedding = create_embedding(current_field_entries["name"])
     create_goal(fields_json)
 
     return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
@@ -94,6 +102,15 @@ def conversational_create_goal_tool(query: str) -> str:
 ##
 # Goal database reader tool
 ##
+
+@tool
+def specific_goal_info_tool(query: str) -> str:
+    '''
+    A tool used to retrieve info about a specific goal.
+    '''
+    query_embedding = create_embedding(query)
+    return "Info"
+
 
 # goal_db_toolkit = SQLDatabaseToolkit(db=goal_database)
 # goal_db_agent_executor = create_sql_agent(

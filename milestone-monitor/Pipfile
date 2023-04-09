@@ -13,6 +13,8 @@ langchain = "*"
 openai = "*"
 python-dotenv = "*"
 black = "*"
+sentence-transformers = "*"
+pgvector = "*"
 
 [dev-packages]
 
