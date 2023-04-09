@@ -9,6 +9,10 @@ twilio = "*"
 psycopg2 = "*"
 celery = "*"
 redis = "*"
+langchain = "*"
+openai = "*"
+python-dotenv = "*"
+black = "*"
 
 [dev-packages]
 
