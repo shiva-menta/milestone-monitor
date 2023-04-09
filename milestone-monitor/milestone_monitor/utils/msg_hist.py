@@ -33,6 +33,9 @@ def get_user_hist(number):
 
 # update a user's convo type ONLY
 def update_user_convo_type(number, convo_type):
+    if convo_type != "main" and convo_type != "create_goal":
+        raise Exception("Invalid convo type.")
+
     key = number
     data = get_user_hist(key)
 
@@ -43,6 +46,11 @@ def update_user_convo_type(number, convo_type):
 
 # update a user's message history ONLY
 def update_user_msg_memory(number, convo_type, messages):
+    if convo_type != "main" and convo_type != "create_goal":
+        raise Exception("Invalid convo type.")
+    if type(messages) is not list:
+        raise Exception("Invalid type for messages.")
+
     key = number
     data = get_user_hist(key)
 
