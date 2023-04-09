@@ -1,12 +1,14 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+import json
 
 class User(models.Model):
     """
     Represents all user personal information.
     """
     name = models.CharField(max_length=100)
-    phone_number = models.IntegerField(
+    phone_number = models.BigIntegerField(
         editable=False,
         validators=[MinValueValidator(10000000000), MaxValueValidator(19999999999)]
     )
@@ -23,17 +25,57 @@ class RecurringGoal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     end_at = models.DateTimeField(blank=True)
-    reminder_time = models.TimeField()
+    reminder_time = models.TimeField(null=True)
     completed = models.BooleanField(default=False)
 
     class Frequency(models.IntegerChoices):
         HOURLY = 0
         DAILY = 1
         WEEKLY = 2
-        BIWEEKLY = 3
-        MONTLY = 4
+        MONTLY = 3
+        MINUTELY = 4
 
     frequency = models.IntegerField(choices=Frequency.choices)
+    task = models.OneToOneField(
+        PeriodicTask,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
+    def delete(self, *args, **kwargs):
+        if self.task is not None:
+            self.task.delete()
+
+        return super(self.__class__, self).delete(*args, **kwargs)
+    
+    def setup_task(self):
+        interval_schedule, created = self.interval_schedule
+        self.task = PeriodicTask.objects.create(
+            name=self.title,
+            task='send_reminder_message',
+            interval=interval_schedule,
+            args=json.dumps([self.user.phone_number, self.title]),
+            start_time=self.created_at,
+        )
+        self.save()
+    
+    @property
+    def interval_schedule(self):
+        if self.frequency == 0:
+            return IntervalSchedule.objects.get_or_create(every=1, period='hours')
+        if self.frequency == 1:
+            return IntervalSchedule.objects.get_or_create(every=1, period='days')
+        if self.frequency == 2:
+            return IntervalSchedule.objects.get_or_create(every=7, period='days')
+        if self.frequency == 3:
+            return IntervalSchedule.objects.get_or_create(every=30, period='days')
+        if self.frequency == 4:
+            return IntervalSchedule.objects.get_or_create(every=1, period='minutes')
+
+        raise NotImplementedError(
+            '''Interval Schedule for {interval} is not added.'''.format(
+                interval=self.time_interval.value))
 
 class OneTimeGoal(models.Model):
     """

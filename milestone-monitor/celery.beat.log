@@ -1,0 +1,5 @@
+[2023-04-09 06:06:52,813: INFO/MainProcess] beat: Starting...
+[2023-04-09 06:29:34,005: INFO/MainProcess] DatabaseScheduler: Schedule changed.
+[2023-04-09 06:36:02,675: INFO/MainProcess] DatabaseScheduler: Schedule changed.
+[2023-04-09 06:36:02,987: INFO/MainProcess] Scheduler: Sending due task Testing. (send_reminder_message)
+[2023-04-09 06:37:02,848: INFO/MainProcess] Scheduler: Sending due task Testing. (send_reminder_message)

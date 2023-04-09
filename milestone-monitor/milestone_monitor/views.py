@@ -11,16 +11,24 @@ curr_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curr_dir)
 from utils.sms import send_sms
 from utils.interactions import create_goal
-from tasks import test_message
 
 # Create your views here.
 def test(request):
-    test_message('+16307308169', "Testing Celery.")
+    # test_message('+16307308169', "Testing Celery.")
     return HttpResponse("Text sent.")
 
 def receive_test(request):
     send_sms('+16109456312', 'Testing Webhook.')
     return HttpResponse("Text sent.")
+
+def make_goal(request):
+    create_goal({
+        'type': 0,
+        'title': 'Testing.',
+        'end_at': "2023-03-28T12:00:00",
+        'frequency': 'MINUTELY',
+    })
+    return HttpResponse("Goal created.")
 
 def print_goals_database(request):
     recurring = RecurringGoal.objects.all()

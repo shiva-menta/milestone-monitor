@@ -6,23 +6,24 @@ from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
 from django.utils.dateparse import parse_datetime
 
 def create_goal(input):
-    goal_type = input.type == 0
-    u = User(name="MM", phone_number=10000000000)
+    print(input)
+    goal_type = input['type'] == 0
+    u = User(name="MM", phone_number=16307308169)
+    u.save()
     g = None
     if goal_type:
         g = RecurringGoal(
             user=u,
-            title=input.title,
-            end_at=parse_datetime(input.end_at),
-            reminder_time=input.reminder_time,
+            title=input['title'],
+            end_at=parse_datetime(input['end_at']),
             completed=False,
-            frequency=input.frequency
+            frequency=4
         )
     else:
         g = OneTimeGoal(
             user=u,
-            title=input.title,
-            end_at=parse_datetime(input.end_at),
+            title=input['title'],
+            end_at=parse_datetime(input['end_at']),
             completed=False
         )
     g.save()

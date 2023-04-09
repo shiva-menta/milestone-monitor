@@ -9,6 +9,7 @@ twilio = "*"
 psycopg2 = "*"
 celery = "*"
 redis = "*"
+django-celery-beat = "*"
 
 [dev-packages]
 

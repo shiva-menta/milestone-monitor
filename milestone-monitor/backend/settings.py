@@ -28,6 +28,7 @@ redis_url = os.environ.get('REDIS_URL')
 CELERY_BROKER_URL = redis_url
 CELERY_RESULT_BACKEND = redis_url
 CELERY_TIMEZONE = 'US/Eastern'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_celery_beat',
     "milestone_monitor"
 ]
 
