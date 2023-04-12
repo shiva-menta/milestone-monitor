@@ -98,13 +98,13 @@ Reminder Time: Time of the day the user would like to be reminded about this goa
 STATUS: either UNFINISHED or SUCCESS
 END FIELD ENTRIES
 
-{history}
+{chat_history}
 Human: {input}
 GoalDesigner:
 FIELD ENTRIES
 """
 
 create_goal_chain_prompt = PromptTemplate(
-    input_variables=["history", "input", "today"],
+    input_variables=["chat_history", "input", "today"],
     template=CREATE_GOAL_CHAIN_TMPL,
 )

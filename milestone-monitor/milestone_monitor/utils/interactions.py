@@ -7,25 +7,34 @@ from django.utils.dateparse import parse_datetime
 
 from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
 
-def create_goal(input):
-    goal_type = input.goalType == 0
-    u = User(name="MM", phone_number=10000000000)
+def create_goal(input: dict):
+    u = User(name="MM", phone_number=10)
+    u.save()
     g = None
 
-    if goal_type:
+    due_date = parse_datetime(input["dueDate"]) if input["dueDate"] else None
+    frequency_map = {
+        "HOURLY": RecurringGoal.Frequency.HOURLY,
+        "DAILY": RecurringGoal.Frequency.DAILY,
+        "WEEKLY": RecurringGoal.Frequency.WEEKLY,
+        "BIWEEKLY": RecurringGoal.Frequency.BIWEEKLY,
+        "MONTHLY": RecurringGoal.Frequency.MONTLY,
+    }
+
+    if input["isRecurring"]:
         g = RecurringGoal(
             user=u,
-            title=input.name,
-            end_at=parse_datetime(input.dueDate),
-            reminder_time=input.reminderTime,
+            title=input["name"],
+            end_at=due_date,
+            reminder_time=input["reminderTime"],
             completed=False,
-            frequency=input.goalFrequency
+            frequency=frequency_map[input["goalFrequency"]]
         )
     else:
         g = OneTimeGoal(
             user=u,
-            title=input.name,
-            end_at=parse_datetime(input.dueDate),
+            title=input["name"],
+            end_at=due_date,
             completed=False
         )
     

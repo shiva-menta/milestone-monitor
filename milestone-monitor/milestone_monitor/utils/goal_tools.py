@@ -1,19 +1,20 @@
-import os
-import sys
 import json
 
 from datetime import datetime
 from re import sub
 
-from langchain import OpenAI, LLMChain
+from langchain import LLMChain
 from langchain.agents import tool, create_sql_agent
-from langchain.agents.agent_toolkits import SQLDatabaseToolkit
+# from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.memory import ConversationBufferWindowMemory
 
+from utils.create_goal_chain import init_create_goal_chain
 from utils.embeddings import create_embedding
 from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
 from utils.interactions import create_goal
 from utils.llm import BASE_LLM
+from utils.memory_utils import memory_to_dict
+from utils.msg_hist import update_user_convo_type, update_user_msg_memory
 
 ##
 # Conversational create goal tool
@@ -43,61 +44,78 @@ def camel_case(s):
 def parse_field_entries(field_entries: str):
     return {field[0]: field[1] for field in [field.split(": ") for field in field_entries.split('\n')]}
 
-# Helper function to convert the given text fields dict to JSON
-def text_fields_to_json(fields: dict):
+# Helper function to format the given text fields dict
+def format_text_fields(fields: dict):
     fields = fields.copy()
-    fields['Due Date'] = datetime(
-        int(fields["Due Date Year"]),
-        int(fields["Due Date Month"]),
-        int(fields["Due Date Day"]),
-        int(fields["Due Date Hour"]),
-        int(fields["Due Date Minute"])
-    )
+    if fields["Due Date Year"] == 'N/A':
+        fields['Due Date'] = None
+    else:
+        fields['Due Date'] = datetime(
+            int(fields["Due Date Year"]),
+            int(fields["Due Date Month"]),
+            int(fields["Due Date Day"]),
+            int(fields["Due Date Hour"]),
+            int(fields["Due Date Minute"])
+        )
     fields['Is Recurring'] = (int) (fields["Goal Type"] == "RECURRING")
 
     for key in ["Due Date Year", "Due Date Month", "Due Date Day", "Due Date Hour", "Due Date Minute", "Goal Type"]:
         del fields[key]
 
-    return json.dumps({camel_case(key): value if value != 'N/A' else None for key, value in fields.items()}, default=str)
+    return {camel_case(key): value if value != 'N/A' else None for key, value in fields.items()}
 
-# TODO: take SMS input
-@tool
-def conversational_create_goal_tool(query: str) -> str:
-    '''
-    A tool which may prompt for additional user input to aid for the creation of a user goal.
-    '''
-    user_input = query
-    current_field_entries = None
+# Function that returns a user-specific tool for creating a goal
+def get_conversational_create_goal_tool(user: str):
 
-    # SET CURRENT CONVO TYPE TO CREATE GOAL
+    @tool
+    def conversational_create_goal_tool(query: str) -> str:
+        '''
+        A tool which may prompt for additional user input to aid for the creation of a user goal.
+        Upon running this tool, a new conversation will be started with a separate model, and info
+        will be updated accordingly. The output of this model is simply the first response from the
+        chain. Memory will be saved, and the conversation type will be updated.
+        '''
+        user_input = query
+        current_field_entries = None
 
+        # Set current convo type to create goal
+        update_user_convo_type(user, "create_goal")
 
-    # QUERY CREATE GOAL MODEL
+        # Create chain
+        chain, memory = init_create_goal_chain(DEBUG=True)
 
-    while True:
-        current_full_output = create_goal_chain.predict(input=user_input, today=datetime.now())
+        # Make prediction
+        current_full_output = chain.predict(input=user_input, today=datetime.now())
 
+        # Extract field entries and output
         current_field_entries = parse_field_entries(current_full_output.split('END FIELD ENTRIES')[0].strip())
         current_conversational_output = current_full_output.split('END FIELD ENTRIES')[1].strip()
-
-        print(current_field_entries)
-
-        if current_field_entries["STATUS"] == "SUCCESS":
-            break
-
         print(f"Temp field entries: {current_field_entries}")
         print(f"Model: {current_conversational_output}")
 
-        user_input = input("User: ")
+        # Save memory of this conversation
+        update_user_msg_memory(user, "create_goal", memory_to_dict(memory))
 
-    # Parse current field entries here
-    # and add them to the database
-    fields_json = text_fields_to_json(current_field_entries)
-    goal_name_embedding = create_embedding(current_field_entries["name"])
-    create_goal(fields_json)
+        # This shouldn't happen on the first round (because the model was "told not to")
+        # but just in case
+        if current_field_entries["STATUS"] == "SUCCESS":
+            assert False
+            update_user_convo_type(user, "main")
 
-    return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
+            # Parse current field entries here
+            # and add them to the database
+            fields_json = text_fields_to_json(current_field_entries)
 
+            # TODO: add embedding using pgvector
+            goal_name_embedding = create_embedding(current_field_entries["name"])
+            create_goal(fields_json)
+
+            return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
+        
+        # This output will be used directly
+        return f"{current_field_entries}\n\n{current_conversational_output}"
+    
+    return conversational_create_goal_tool
 
 ##
 # Goal database reader tool

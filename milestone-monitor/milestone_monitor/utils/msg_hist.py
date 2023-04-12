@@ -4,7 +4,7 @@ from backend.settings import (
     redis_url
 )
 
-r = redis.Redis.from_url(redis_url)
+r = redis.Redis.from_url("redis://localhost:6379")
 
 # create message history object for a user if not there
 def create_default_user_hist(number):

@@ -27,8 +27,8 @@ import milestone_monitor.views as views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("sms/", views.test, name="send-message"),
-    path("receivesms/", views.receive_test, name="test-message"),
+    path("sms/", views.test_sms, name="send-message"),
+    path("reset/", views.reset_user, name="test-message"),
     path("api/", views.print_goals_database, name="print-output"),
     path("chatbot/", views.chatbot_send_msg, name="chatbot-send-message"),
     path("redis/", views.test_redis, name="redis-test")

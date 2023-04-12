@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from pgvector.django import VectorField
+# from pgvector.django import VectorField
 
 class User(models.Model):
     """
@@ -23,10 +23,10 @@ class RecurringGoal(models.Model):
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    end_at = models.DateTimeField(blank=True)
+    end_at = models.DateTimeField(blank=True, null=True)
     reminder_time = models.TimeField()
     completed = models.BooleanField(default=False)
-    embedding = VectorField(dimensions=384)
+    # embedding = VectorField(dimensions=384)
 
     class Frequency(models.IntegerChoices):
         HOURLY = 0
@@ -47,6 +47,6 @@ class OneTimeGoal(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     end_at = models.DateTimeField()
     completed = models.BooleanField(default=False)
-    embedding = VectorField(dimensions=384)
+    # embedding = VectorField(dimensions=384)
 
 
