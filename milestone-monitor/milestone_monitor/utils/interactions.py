@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_datetime
 def create_goal(input):
     print(input)
     goal_type = input['type'] == 0
-    u = User(name="MM", phone_number=16307308169)
+    u = User(name="MM", phone_number=int(input['number']))
     u.save()
     g = None
     if goal_type:
@@ -17,7 +17,7 @@ def create_goal(input):
             title=input['title'],
             end_at=parse_datetime(input['end_at']),
             completed=False,
-            frequency=4
+            frequency=RecurringGoal.Frequency.MINUTELY
         )
     else:
         g = OneTimeGoal(

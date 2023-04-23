@@ -26,9 +26,6 @@ sys.path.insert(0, parent_dir)
 import milestone_monitor.views as views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("sms/", views.test, name="send-message"),
-    path("receivesms/", views.receive_test, name="test-message"),
-    path("api/", views.print_goals_database, name="print-output"),
-    path("goal/", views.make_goal, name="create-goal")
+    path("sms/", views.receive_sms, name="receive-message"),
+    path("db/", views.print_goals_database, name="view-goals")
 ]
