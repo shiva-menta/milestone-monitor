@@ -25,7 +25,7 @@ class RecurringGoal(models.Model):
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    end_at = models.DateTimeField(blank=True)
+    end_at = models.DateTimeField(blank=True, null=True)
     reminder_time = models.TimeField(null=True)
     completed = models.BooleanField(default=False)
     # embedding = VectorField(dimensions=384)
