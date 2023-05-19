@@ -34,7 +34,22 @@ def test_sms(request):
     send_sms(user, query)
 
     return HttpResponse("Text sent.")
+# PROD: MAIN TEXTING ENDPOINT
+@csrf_exempt
+def receive_sms(request):
+    if request.method == 'POST':
+        request_msg = request.POST.get('Body', "")
+        request_sndr = request.POST.get('From', "")
 
+        create_goal({
+            'number': request_sndr[1:],
+            'type': 0,
+            'title': request_msg,
+            'end_at': "2023-03-28T12:00:00",
+            'frequency': 'MINUTELY'
+        })
+
+        return HttpResponse("Goal created.")
 @csrf_exempt
 def reset_user(request):
     # Get user data
@@ -46,6 +61,7 @@ def reset_user(request):
 
     return HttpResponse("User data reset.")
 
+# DEV: CHECK CURRENT GOAL DATABASE
 def print_goals_database(request):
     recurring = RecurringGoal.objects.all()
     one_time = OneTimeGoal.objects.all()

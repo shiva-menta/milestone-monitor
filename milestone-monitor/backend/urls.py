@@ -31,5 +31,7 @@ urlpatterns = [
     path("reset/", views.reset_user, name="test-message"),
     path("api/", views.print_goals_database, name="print-output"),
     path("chatbot/", views.chatbot_send_msg, name="chatbot-send-message"),
-    path("redis/", views.test_redis, name="redis-test")
+    path("redis/", views.test_redis, name="redis-test"),
+    path("sms/", views.receive_sms, name="receive-message"),
+    path("db/", views.print_goals_database, name="view-goals")
 ]

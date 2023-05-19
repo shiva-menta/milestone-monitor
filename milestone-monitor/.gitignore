@@ -1,2 +1,4 @@
 .env
 docker-compose.yaml
+celery.beat.log
+celery.worker.log

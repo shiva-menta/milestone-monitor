@@ -5,10 +5,10 @@ from django.conf import settings
 from django.db.models import F, Max, OuterRef, Q, Subquery, Value
 from django.utils.dateparse import parse_datetime
 
-from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
-
-def create_goal(input: dict):
-    u = User(name="MM", phone_number=10)
+def create_goal(input):
+    print(input)
+    goal_type = input['type'] == 0
+    u = User(name="MM", phone_number=int(input['number']))
     u.save()
     g = None
 
@@ -24,17 +24,16 @@ def create_goal(input: dict):
     if input["isRecurring"]:
         g = RecurringGoal(
             user=u,
-            title=input["name"],
-            end_at=due_date,
-            reminder_time=input["reminderTime"],
+            title=input['title'],
+            end_at=parse_datetime(input['end_at']),
             completed=False,
-            frequency=frequency_map[input["goalFrequency"]]
+            frequency=RecurringGoal.Frequency.MINUTELY
         )
     else:
         g = OneTimeGoal(
             user=u,
-            title=input["name"],
-            end_at=due_date,
+            title=input['title'],
+            end_at=parse_datetime(input['end_at']),
             completed=False
         )
     
