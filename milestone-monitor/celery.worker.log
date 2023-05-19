@@ -377,3 +377,6 @@ Trying again in 24.00 seconds... (12/100)
 [2023-04-23 05:52:50,225: ERROR/MainProcess] consumer: Cannot connect to redis://localhost:6379//: Error 61 connecting to localhost:6379. Connection refused..
 Trying again in 24.00 seconds... (12/100)
 
+[2023-05-19 18:53:26,051: ERROR/MainProcess] consumer: Cannot connect to redis://localhost:6379//: Error 61 connecting to localhost:6379. Connection refused..
+Trying again in 32.00 seconds... (16/100)
+
