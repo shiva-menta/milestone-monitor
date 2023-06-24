@@ -14,6 +14,7 @@ def send_sms(number, body):
     """
     Send SMS message to input number with input body using Twilio messaging.
     """
+    print("send_sms")
     message = client.messages.create(
         messaging_service_sid=messaging_service_sid,
         body=body,

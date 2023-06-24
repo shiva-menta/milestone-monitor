@@ -1,3 +1,5 @@
+# Utils for making/getting the "create goal" LLM chain
+
 from langchain import LLMChain
 from langchain.memory import ConversationBufferWindowMemory
 

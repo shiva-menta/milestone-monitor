@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 # send scheduled messages
 @shared_task(name = "send_reminder_message")
 def send_reminder_message(number, task_title):
+    print("test")
     send_sms(
         '+' + str(number),
         f"""

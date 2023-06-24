@@ -45,6 +45,8 @@ SECRET_KEY = "django-insecure-uacs21$(w==*xcus+gzpun+2k2lf1+zm9f@p0m)9rbcfz$p6ab
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
     ngrok_forwarding
 ]
 

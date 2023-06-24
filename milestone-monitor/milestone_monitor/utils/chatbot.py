@@ -1,3 +1,5 @@
+# Generates toolset and chatbot agent
+
 from langchain import OpenAI, LLMChain
 from langchain.agents import AgentExecutor, Tool, initialize_agent
 from langchain.chat_models import ChatOpenAI
