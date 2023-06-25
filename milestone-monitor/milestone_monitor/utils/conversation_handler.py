@@ -17,7 +17,11 @@ from utils.msg_hist import (
     update_user_msg_memory,
     create_default_user_hist,
 )
-from utils.goal_tools import parse_field_entries, format_text_fields
+from utils.goal_tools import (
+    parse_field_entries,
+    format_text_fields,
+    prettify_field_entries,
+)
 
 
 # Upon receiving a message from a user, this handles the message,
@@ -60,9 +64,7 @@ def chatbot_respond(query, user):
         chain = get_create_goal_chain(create_memory, DEBUG=True)
 
         # Get the output from the goal creator chain
-        print("TEST")
         current_full_output = chain.predict(input=query, today=datetime.now())
-        print("END TEST")
 
         # Extract field entries and output
         current_field_entries = parse_field_entries(
@@ -71,8 +73,6 @@ def chatbot_respond(query, user):
         current_conversational_output = current_full_output.split("END FIELD ENTRIES")[
             1
         ].strip()
-        print(f"Temp field entries: {current_field_entries}")
-        print(f"Model: {current_conversational_output}")
 
         # Save memory
         update_user_msg_memory(user, "create_goal", memory_to_dict(create_memory))
@@ -108,7 +108,8 @@ def chatbot_respond(query, user):
             main_chatbot = get_main_chatbot(user, main_memory, DEBUG=True)
             output = main_chatbot.run(query)
         else:
-            output = f"{current_field_entries}\n\n{current_conversational_output}"
+            pretty_field_entries = prettify_field_entries(current_field_entries)
+            output = f"{pretty_field_entries}\n\n{current_conversational_output}"
 
     # Send output as an SMS
     send_sms(user, output)

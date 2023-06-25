@@ -34,7 +34,7 @@ class RecurringGoal(models.Model):
         DAILY = 1
         WEEKLY = 2
         BIWEEKLY = 3
-        MONTLY = 4
+        MONTHLY = 4
 
         MINUTELY = 99  # for debugging purposes
 

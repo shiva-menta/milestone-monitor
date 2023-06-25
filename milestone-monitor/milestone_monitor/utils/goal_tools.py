@@ -42,16 +42,35 @@ def camel_case(s):
     return "".join([s[0].lower(), s[1:]])
 
 
-# Helper function to parse the field entries as text to a dict
 def parse_field_entries(field_entries: str):
+    """
+    Parses the raw output of the LLM field entries from a string to a dict
+
+    The output keys for the dict will NOT be in camel case yet (use `format_text_fields` for this)
+    """
     return {
         field[0]: field[1]
         for field in [field.split(": ") for field in field_entries.split("\n")]
     }
 
 
-# Helper function to format the given text fields dict
 def format_text_fields(fields: dict):
+    """
+    Formats the provided fields (from the parsed field entries) to prepare
+    for the database
+
+    Output goal_data:
+      - name: string
+      - description: string
+      - estimatedImportance: 'HIGH' | 'MEDIUM' | 'LOW'
+      - estimatedDurationHours: int
+      - goalFrequency: 'DAILY' | 'WEEKLY' | None
+      - reminderFrequency: 'HOURLY' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | None
+      - reminderTime: HH:MM
+      - status: 'SUCCESS'
+      - dueDate: datetime
+      - isRecurring: 0 | 1
+    """
     fields = fields.copy()
     if fields["Due Date Year"] == "N/A":
         fields["Due Date"] = None
@@ -80,6 +99,28 @@ def format_text_fields(fields: dict):
         for key, value in fields.items()
     }
 
+
+def prettify_field_entries(fields: dict):
+    """
+    Takes the parsed field entries (in dict form, just not formatted with camelCase)
+    and prettifies them to display to the user
+    """
+
+    data = format_text_fields(fields)
+    pretty_output = f'🎯 {data["name"]}' + '\n\n'
+    pretty_output += data["description"] + '\n\n'
+    if data["dueDate"]:
+        pretty_output += f'📆 Due date: {data["dueDate"].strftime("%m/%d/%Y, %H:%M:%S")}' + '\n'
+    pretty_output += f'⭐️ Priority level: {data["estimatedImportance"].lower()}' + '\n'
+    if data["estimatedDurationHours"]: 
+        pretty_output += f'⏳ Estimated duration: {data["estimatedDurationHours"]} hours' + '\n'
+    if data["goalFrequency"]:
+        pretty_output += f'💪 Goal frequency: {data["goalFrequency"].lower()}' + '\n'
+    pretty_output += f'{"🔁" if data["isRecurring"] else "⤴️"} Goal type: {"recurring" if data["isRecurring"] else "one-time"}' + '\n'
+    pretty_output += f'⏲️ Reminder frequency: {data["reminderFrequency"].lower() if data["reminderFrequency"] else "N/A"}' + '\n'
+    pretty_output += f'⏰ Reminder time: {data["reminderTime"]}'
+
+    return pretty_output
 
 # Function that returns a user-specific tool for creating a goal
 def get_conversational_create_goal_tool(user: str):
@@ -115,8 +156,6 @@ def get_conversational_create_goal_tool(user: str):
         current_conversational_output = current_full_output.split("END FIELD ENTRIES")[
             1
         ].strip()
-        print(f"Temp field entries: {current_field_entries}")
-        print(f"Model: {current_conversational_output}")
 
         # Save memory of this conversation
         update_user_msg_memory(user, "create_goal", memory_to_dict(memory))
@@ -138,7 +177,8 @@ def get_conversational_create_goal_tool(user: str):
             return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
 
         # This output will be used directly
-        return f"{current_field_entries}\n\n{current_conversational_output}"
+        pretty_field_entries = prettify_field_entries(current_field_entries)
+        return f"{pretty_field_entries}\n\n{current_conversational_output}"
 
     return conversational_create_goal_tool
 

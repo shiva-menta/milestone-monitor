@@ -22,7 +22,7 @@ def create_goal(goal_data, user):
       - isRecurring: 0 | 1
     user: string (of the form "+12345678901")
     """
-    print(input)
+    print(goal_data)
 
     # TODO: validate `status`
 
@@ -51,19 +51,31 @@ def create_goal(goal_data, user):
         g = RecurringGoal(
             user=u,
             title=goal_data["name"],
-            end_at=parse_datetime(goal_data["dueDate"]),
-            reminder_time=parse_time(goal_data["reminderTime"]),
+            end_at=goal_data["dueDate"],
+            reminder_time=(
+                parse_time(goal_data["reminderTime"])
+                if goal_data["reminderTime"]
+                else None
+            ),
             completed=False,
-            frequency=RecurringGoal.Frequency.MINUTELY,
-            # frequency=reminder_frequency_map.get(goal_data["reminderFrequency"], 1)
-            importance=importance_map.get(goal_data["estimatedImportance"], 1),
+            # frequency=RecurringGoal.Frequency.MINUTELY,
+            frequency=reminder_frequency_map.get(
+                goal_data["reminderFrequency"], RecurringGoal.Frequency.DAILY
+            ),
+            importance=importance_map.get(
+                goal_data["estimatedImportance"], RecurringGoal.Importance.LOW
+            ),
         )
     else:
         g = OneTimeGoal(
             user=u,
-            title=goal_data["title"],
-            end_at=parse_datetime(goal_data["dueDate"]),
-            reminder_time=parse_time(goal_data["reminderTime"]),
+            title=goal_data["name"],
+            end_at=goal_data["dueDate"],
+            reminder_time=(
+                parse_time(goal_data["reminderTime"])
+                if goal_data["reminderTime"]
+                else None
+            ),
             completed=False,
             importance=importance_map.get(goal_data["estimatedImportance"], 1),
         )

@@ -94,7 +94,7 @@ Estimated Importance: Estimated importance of the goal; answer should be one of 
 Estimated Duration Hours: Estimated number of hours the goal will take, in hours as an integer. If RECURRING, this should be the number of hours per one iteration of the goal. If unsure, ask the user.
 Goal Frequency: How often the user needs to work towards the goal, if the goal is RECURRING; answer should be one of DAILY, WEEKLY, or N/A. If unsure, ask the user.
 Reminder Frequency: How often the user would like to be reminded about this goal; answer should be one of HOURLY, DAILY, WEEKLY, BIWEEKLY, MONTHLY or N/A. If unsure, ask the user.
-Reminder Time: Time of the day the user would like to be reminded about this goal in HH:MM form.
+Reminder Time: Time of the day the user would like to be reminded about this goal in HH:MM form. This is required, so if unsure, put the end of the day and ask the user.
 STATUS: either UNFINISHED or SUCCESS
 END FIELD ENTRIES
 

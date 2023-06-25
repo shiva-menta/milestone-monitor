@@ -43,8 +43,9 @@ def chatbot_respond_async(request_msg, request_sndr):
     # it will just immediately respond to the user
 
     # Bot is in the middle of responding, so we need to queue up the message (and message type)
+    r.srem("active-conversations", request_sndr)
     if r.sismember("active-conversations", request_sndr):
-        print(">>> Conversation is currently activate, queueing")
+        print(">>> Conversation is currently active, queueing")
         to_queue_msg = json.dumps({"type": "user", "content": request_msg})
         r.lpush(chat_msg_queue, to_queue_msg)
     else:
@@ -54,6 +55,7 @@ def chatbot_respond_async(request_msg, request_sndr):
 
         # No pending messages, so it is okay to respond immediately
         r.sadd("active-conversations", request_sndr)
+        print(">>> Setting conversation as active")
         chatbot_respond(request_msg, request_sndr)
 
         # By this point, it is possible that messages have been queued up while that above
@@ -80,7 +82,7 @@ def chatbot_respond_async(request_msg, request_sndr):
 
             # Queue chatbot with new messages and have it respond
             if user_msgs:
-                compiled_user_msgs = user_msgs.join("\n")
+                compiled_user_msgs = "\n".join(user_msgs)
                 chatbot_respond(compiled_user_msgs, request_sndr)
 
             # Remove all messages from the queue and
@@ -91,3 +93,4 @@ def chatbot_respond_async(request_msg, request_sndr):
         # By this point, there are no more messages left to be sent, so
         # we can remove the user from the list of active conversations
         r.srem("active-conversations", request_sndr)
+        print(">>> Setting conversation as inactive")

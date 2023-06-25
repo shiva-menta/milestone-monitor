@@ -45,8 +45,8 @@ def receive_sms(request):
     - Phone number will look like "+14017122661"
     """
     if request.method == "POST":
-        logging.info("Received SMS message from user")
-        print("received sms message from user")
+        # logging.info("Received SMS message from user")
+        print(">>> Received message from user")
 
         # TODO: validate user phone number here (or add international support)
 
