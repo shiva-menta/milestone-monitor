@@ -1,16 +1,30 @@
 # Milestone Monitor
 
 ## Usage
+
 We've created a personal goal tracking chatbot called Milestone Monitor that anyone can chat with, simply by texting (number here once ready). Milestone Monitor uses GPT-powered capabilities to keep track of any goals, tasks, or habits you have, as well as send you tips and reminders regularly.
 
 ## Deploying Locally (WIP)
-*Note: you will need Twilio and OpenAI accounts in order to do this*
+
+_Note: you will need Twilio and OpenAI accounts in order to do this_
 
 1. Setting up ngrok:
-  - Install ngrok [here](https://ngrok.com/download) if you don't already have it, and follow [these steps](https://dashboard.ngrok.com/get-started/setup) to setup
-  - Instead of forwarding to port 80, use port 8000 (for Django), so the last command should be `ngrok http 8000`
-  - Copy the forwarding URL for later (should be `XXXXX.ngrok-free.app`, without the `https://`)
-2. Create a `.env` folder in the top directory with the following entries:
+
+- Install ngrok [here](https://ngrok.com/download) if you don't already have it, and follow [these steps](https://dashboard.ngrok.com/get-started/setup) to setup
+- Instead of forwarding to port 80, use port 8000 (for Django), so the last command should be `ngrok http 8000`
+- Copy the forwarding URL for later (should be `XXXXX.ngrok-free.app`, without the `https://`)
+
+2. Configuring Twilio:
+
+After getting an active number, you will need to go to `Configure > Messaging Configuration` and do the following:
+
+- Set "Configure with" and "A message comes in" to the default settings (should be a webhook)
+- Set the URL to `{your ngrok link}/sms/`
+- Make sure the last field is `POST` and not `GET`
+- Finally, make sure to save the configuration
+
+3. Create a `.env` folder in the top directory with the following entries:
+
 ```
 TWILIO_ACCOUNT_SID={Twilio account SID}
 TWILIO_AUTH_TOKEN={Twilio authentication token}
@@ -24,11 +38,15 @@ NGROK_FORWARDING={ngrok forwarding URL here}
 OPENAI_API_KEY={OpenAI API key here}
 LANGCHAIN_HANDLER=langchain
 ```
-3. Open a terminal in this directory:
-  - `cd milestone-monitor` (move into the second inner `milestone-monitor` folder)
-  - `pipenv shell`
-  - `pipenv install`
-4. Open a second terminal, and `cd` into the inner `milestone-monitor` folder:
-  - Make sure Docker Desktop is open, and run `docker-compose up`
-  - `python3 manage.py migrate` (in the original terminal window)
-  - `./runserver.sh` to run the server
+
+4. Open a terminal in this directory:
+
+- `cd milestone-monitor` (move into the second inner `milestone-monitor` folder)
+- `pipenv shell`
+- `pipenv install`
+
+5. Open a second terminal, and `cd` into the inner `milestone-monitor` folder:
+
+- Make sure Docker Desktop is open, and run `docker-compose up`
+- `python3 manage.py migrate` (in the original terminal window)
+- `./runserver.sh` to run the server

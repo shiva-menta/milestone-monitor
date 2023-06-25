@@ -1,26 +1,48 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+
 # from pgvector.django import VectorField
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 import json
+
 
 class User(models.Model):
     """
     Represents all user personal information.
     """
+
     name = models.CharField(max_length=100)
     phone_number = models.BigIntegerField(
         editable=False,
-        validators=[MinValueValidator(10000000000), MaxValueValidator(19999999999)]
+        validators=[
+            MinValueValidator(1_000_000_0000),  # e.g. +1 234 567 8901
+            MaxValueValidator(1_999_999_9999),
+        ],
     )
 
     def __str__(self):
         return f"{self.name} – {self.phone_number}"
 
+
 class RecurringGoal(models.Model):
     """
     Represents all users' recurring goals (habits) they're trying to accomplish.
     """
+
+    class Frequency(models.IntegerChoices):
+        HOURLY = 0
+        DAILY = 1
+        WEEKLY = 2
+        BIWEEKLY = 3
+        MONTLY = 4
+
+        MINUTELY = 99  # for debugging purposes
+
+    class Importance(models.IntegerChoices):
+        LOW = 1
+        MEDIUM = 2
+        HIGH = 3
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True)
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -29,15 +51,8 @@ class RecurringGoal(models.Model):
     reminder_time = models.TimeField(null=True)
     completed = models.BooleanField(default=False)
     # embedding = VectorField(dimensions=384)
-
-    class Frequency(models.IntegerChoices):
-        HOURLY = 0
-        DAILY = 1
-        WEEKLY = 2
-        MONTLY = 3
-        MINUTELY = 4
-
     frequency = models.IntegerField(choices=Frequency.choices)
+    importance = models.IntegerField(choices=Importance.choices)
     task = models.OneToOneField(
         PeriodicTask,
         on_delete=models.CASCADE,
@@ -50,39 +65,45 @@ class RecurringGoal(models.Model):
             self.task.delete()
 
         return super(self.__class__, self).delete(*args, **kwargs)
-    
+
     def setup_task(self):
         interval_schedule, created = self.interval_schedule
         self.task = PeriodicTask.objects.create(
             name=self.title,
-            task='send_reminder_message',
+            task="send_reminder_message",
             interval=interval_schedule,
             args=json.dumps([self.user.phone_number, self.title]),
             start_time=self.created_at,
         )
         self.save()
-    
+
     @property
     def interval_schedule(self):
         if self.frequency == 0:
-            return IntervalSchedule.objects.get_or_create(every=1, period='hours')
+            return IntervalSchedule.objects.get_or_create(every=1, period="hours")
         if self.frequency == 1:
-            return IntervalSchedule.objects.get_or_create(every=1, period='days')
+            return IntervalSchedule.objects.get_or_create(every=1, period="days")
         if self.frequency == 2:
-            return IntervalSchedule.objects.get_or_create(every=7, period='days')
+            return IntervalSchedule.objects.get_or_create(every=7, period="days")
         if self.frequency == 3:
-            return IntervalSchedule.objects.get_or_create(every=30, period='days')
+            return IntervalSchedule.objects.get_or_create(every=14, period="days")
         if self.frequency == 4:
-            return IntervalSchedule.objects.get_or_create(every=1, period='minutes')
+            return IntervalSchedule.objects.get_or_create(every=30, period="days")
+        if self.frequency == 99:
+            return IntervalSchedule.objects.get_or_create(every=1, period="minutes")
 
         raise NotImplementedError(
-            '''Interval Schedule for {interval} is not added.'''.format(
-                interval=self.time_interval.value))
+            """Interval Schedule for {interval} is not added.""".format(
+                interval=self.time_interval.value
+            )
+        )
+
 
 class OneTimeGoal(models.Model):
     """
     Represents all users' one time goals (tasks) they're trying to accomplish.
     """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -90,5 +111,3 @@ class OneTimeGoal(models.Model):
     end_at = models.DateTimeField()
     completed = models.BooleanField(default=False)
     # embedding = VectorField(dimensions=384)
-
-

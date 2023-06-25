@@ -15,25 +15,25 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
-twilio_auth = os.environ.get('TWILIO_AUTH')
-messaging_service_sid = os.environ.get('MESSAGING_SERVICE_SID')
-pg_user = os.environ.get('POSTGRES_USER')
-pg_pass = os.environ.get('POSTGRES_PASSWORD')
-pg_db = os.environ.get('POSTGRES_DB')
-redis_url = os.environ.get('REDIS_URL')
-ngrok_forwarding = os.environ.get('NGROK_FORWARDING')
+twilio_account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+twilio_auth = os.environ.get("TWILIO_AUTH")
+messaging_service_sid = os.environ.get("MESSAGING_SERVICE_SID")
+pg_user = os.environ.get("POSTGRES_USER")
+pg_pass = os.environ.get("POSTGRES_PASSWORD")
+pg_db = os.environ.get("POSTGRES_DB")
+redis_url = os.environ.get("REDIS_URL")
+ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
 
 # Celery Config
 CELERY_BROKER_URL = redis_url
 CELERY_RESULT_BACKEND = redis_url
-CELERY_TIMEZONE = 'US/Eastern'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_TIMEZONE = "US/Eastern"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -47,7 +47,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    ngrok_forwarding
+    ngrok_forwarding,
+    "1d67-2600-1002-b026-9b84-9946-87f0-87a-71b2.ngrok-free.app",
 ]
 
 
@@ -60,8 +61,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django_celery_beat',
-    "milestone_monitor"
+    "django_celery_beat",
+    "milestone_monitor",
 ]
 
 MIDDLEWARE = [
@@ -117,9 +118,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 ]
 
 
