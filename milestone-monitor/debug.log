@@ -1,0 +1,77 @@
+Could not import azure.core python package.
+Could not import azure.core python package.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+Could not import azure.core python package.
+Could not import azure.core python package.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+Could not import azure.core python package.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+NumExpr defaulting to 8 threads.
+/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py changed, reloading.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
+Internal Server Error: /sms/
+Traceback (most recent call last):
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py", line 40, in receive_sms
+    create_goal({
+TypeError: create_goal() missing 1 required positional argument: 'user'
+Internal Server Error: /sms/
+Traceback (most recent call last):
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py", line 40, in receive_sms
+    create_goal({
+TypeError: create_goal() missing 1 required positional argument: 'user'
+/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py changed, reloading.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
+Internal Server Error: /sms/
+Traceback (most recent call last):
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py", line 41, in receive_sms
+    create_goal({
+TypeError: create_goal() missing 1 required positional argument: 'user'
+Internal Server Error: /sms/
+Traceback (most recent call last):
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/shivamenta/.local/share/virtualenvs/milestone-monitor-U6VeiWHH/lib/python3.10/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py", line 41, in receive_sms
+    create_goal({
+TypeError: create_goal() missing 1 required positional argument: 'user'
+/Users/shivamenta/repos/milestone-monitor/milestone-monitor/milestone_monitor/views.py changed, reloading.
+Watching for file changes with StatReloader
+Could not import azure.core python package.
+NumExpr defaulting to 8 threads.
