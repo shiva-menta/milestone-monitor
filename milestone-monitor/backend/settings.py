@@ -48,7 +48,6 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     ngrok_forwarding,
-    "1d67-2600-1002-b026-9b84-9946-87f0-87a-71b2.ngrok-free.app",
 ]
 
 

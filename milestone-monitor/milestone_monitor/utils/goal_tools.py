@@ -21,7 +21,8 @@ from utils.msg_hist import update_user_convo_type, update_user_msg_memory
 from utils.sms import send_sms
 
 ##
-# Conversational create goal tool
+# GOAL CREATION
+# Conversational goal creation tool, enters a whole separate conversation
 ##
 
 goal_create_memory = ConversationBufferWindowMemory(
@@ -37,7 +38,7 @@ create_goal_chain = LLMChain(
 
 
 # Helper function to convert a string to camel case
-def camel_case(s):
+def _camel_case(s):
     s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
     return "".join([s[0].lower(), s[1:]])
 
@@ -95,7 +96,7 @@ def format_text_fields(fields: dict):
         del fields[key]
 
     return {
-        camel_case(key): value if value != "N/A" else None
+        _camel_case(key): value if value != "N/A" else None
         for key, value in fields.items()
     }
 
@@ -107,23 +108,34 @@ def prettify_field_entries(fields: dict):
     """
 
     data = format_text_fields(fields)
-    pretty_output = f'🎯 {data["name"]}' + '\n\n'
-    pretty_output += data["description"] + '\n\n'
+    pretty_output = f'🎯 {data["name"]}' + "\n\n"
+    pretty_output += data["description"] + "\n\n"
     if data["dueDate"]:
-        pretty_output += f'📆 Due date: {data["dueDate"].strftime("%m/%d/%Y, %H:%M:%S")}' + '\n'
-    pretty_output += f'⭐️ Priority level: {data["estimatedImportance"].lower()}' + '\n'
-    if data["estimatedDurationHours"]: 
-        pretty_output += f'⏳ Estimated duration: {data["estimatedDurationHours"]} hours' + '\n'
+        pretty_output += (
+            f'📆 Due date: {data["dueDate"].strftime("%m/%d/%Y, %H:%M:%S")}' + "\n"
+        )
+    pretty_output += f'⭐️ Priority level: {data["estimatedImportance"].lower()}' + "\n"
+    if data["estimatedDurationHours"]:
+        pretty_output += (
+            f'⏳ Estimated duration: {data["estimatedDurationHours"]} hours' + "\n"
+        )
     if data["goalFrequency"]:
-        pretty_output += f'💪 Goal frequency: {data["goalFrequency"].lower()}' + '\n'
-    pretty_output += f'{"🔁" if data["isRecurring"] else "⤴️"} Goal type: {"recurring" if data["isRecurring"] else "one-time"}' + '\n'
-    pretty_output += f'⏲️ Reminder frequency: {data["reminderFrequency"].lower() if data["reminderFrequency"] else "N/A"}' + '\n'
+        pretty_output += f'💪 Goal frequency: {data["goalFrequency"].lower()}' + "\n"
+    pretty_output += (
+        f'{"🔁" if data["isRecurring"] else "⤴️"} Goal type: {"recurring" if data["isRecurring"] else "one-time"}'
+        + "\n"
+    )
+    pretty_output += (
+        f'⏲️ Reminder frequency: {data["reminderFrequency"].lower() if data["reminderFrequency"] else "N/A"}'
+        + "\n"
+    )
     pretty_output += f'⏰ Reminder time: {data["reminderTime"]}'
 
     return pretty_output
 
-# Function that returns a user-specific tool for creating a goal
-def get_conversational_create_goal_tool(user: str):
+
+# Function that RETURNS a user-specific tool for creating a goal
+def get_conversational_create_goal_tool(user: str) -> callable:
     @tool
     def conversational_create_goal_tool(query: str) -> str:
         """
@@ -184,17 +196,29 @@ def get_conversational_create_goal_tool(user: str):
 
 
 ##
-# Goal database reader tool
+# GOAL READING
+# Available tools:
+# - Summarize goal recent activity
+# - Ask question about goal
+# - Get goal specific info (database)
 ##
 
 
-@tool
-def specific_goal_info_tool(query: str) -> str:
+def fetch_goal_id(query: str, user: str) -> int:
     """
-    A tool used to retrieve info about a specific goal.
+    Helper function that fetches the appropriate goal ID given an input query
     """
-    query_embedding = create_embedding(query)
-    return "Info"
+    pass
+
+
+def get_retrieve_goal_id_tool(user: str) -> callable:
+    @tool
+    def specific_goal_info_tool(query: str) -> str:
+        """
+        A tool used to retrieve info about a specific goal.
+        """
+        query_embedding = create_embedding(query)
+        return "Info"
 
 
 # goal_db_toolkit = SQLDatabaseToolkit(db=goal_database)

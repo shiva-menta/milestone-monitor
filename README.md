@@ -6,7 +6,7 @@ We've created a personal goal tracking chatbot called Milestone Monitor that any
 
 ## Deploying Locally (WIP)
 
-_Note: you will need Twilio and OpenAI accounts in order to do this_
+_Note: you will need Twilio, OpenAI, Pinecone, and Cohere accounts in order to do this_
 
 1. Setting up ngrok:
 
@@ -23,7 +23,17 @@ After getting an active number, you will need to go to `Configure > Messaging Co
 - Make sure the last field is `POST` and not `GET`
 - Finally, make sure to save the configuration
 
-3. Create a `.env` folder in the top directory with the following entries:
+3. Setup Cohere and Pinecone (should be completely free):
+
+- You can get your Cohere API key here: https://dashboard.cohere.ai/api-keys
+- You will need to set up a Pinecone database here: https://app.pinecone.io/
+  - Name the index `milestone-monitor`
+  - Set the embedding size to 1024 (needs to line up with the Cohere model you're using)
+  - Choose P1 for the pod type (not sure if this matters for the starter plan though)
+  - Make sure the similarity metric is `cosine`
+  - You will also need to copy your own API key (left sidebar) as `PINECONE_API_KEY`, along with the environment beside it as `PINECONE_ENV`
+
+4. Create a `.env` folder in the top directory with the following entries:
 
 ```
 TWILIO_ACCOUNT_SID={Twilio account SID}
@@ -36,16 +46,19 @@ POSTGRES_DB={your postgres database name}
 NGROK_FORWARDING={ngrok forwarding URL here}
 
 OPENAI_API_KEY={OpenAI API key here}
-LANGCHAIN_HANDLER=langchain
+COHERE_API_KEY={Cohere API key here}
+PINECONE_API_KEY={Pinecone API key here}
+PINECONE_ENV={Pinecone environmnet key here}
+PINECONE_INDEX=`milestone-monitor`
 ```
 
-4. Open a terminal in this directory:
+5. Open a terminal in this directory:
 
 - `cd milestone-monitor` (move into the second inner `milestone-monitor` folder)
 - `pipenv shell`
 - `pipenv install`
 
-5. Open a second terminal, and `cd` into the inner `milestone-monitor` folder:
+6. Open a second terminal, and `cd` into the inner `milestone-monitor` folder:
 
 - Make sure Docker Desktop is open, and run `docker-compose up`
 - `python3 manage.py migrate` (in the original terminal window)

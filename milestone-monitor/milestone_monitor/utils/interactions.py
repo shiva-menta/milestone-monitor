@@ -1,13 +1,23 @@
-# Utils for interacting with the database
+# Utils for interacting with the databases
 
+import os
 from django.conf import settings
 from django.db.models import F, Max, OuterRef, Q, Subquery, Value
 from django.utils.dateparse import parse_datetime, parse_time
 
+import cohere
+import pinecone
+
 from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
 
+COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+PINECONE_ENV = os.environ.get("PINECONE_ENV")
+PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
+COHERE_EMBED_MODEL = "embed-english-light-v2.0"
 
-def create_goal(goal_data, user):
+
+def create_goal(goal_data, user: str):
     """
     goal_data:
       - name: string
@@ -22,7 +32,6 @@ def create_goal(goal_data, user):
       - isRecurring: 0 | 1
     user: string (of the form "+12345678901")
     """
-    print(goal_data)
 
     # TODO: validate `status`
 
@@ -45,18 +54,19 @@ def create_goal(goal_data, user):
         "HIGH": RecurringGoal.Importance.HIGH,
     }
 
-    # Create and save goal
+    # Create and save goal in postgres
     g = None
     if goal_data["isRecurring"]:
         g = RecurringGoal(
             user=u,
             title=goal_data["name"],
             end_at=goal_data["dueDate"],
-            reminder_time=(
-                parse_time(goal_data["reminderTime"])
-                if goal_data["reminderTime"]
-                else None
-            ),
+            # reminder_time=(
+            #     parse_time(goal_data["reminderTime"])
+            #     if goal_data["reminderTime"]
+            #     else None
+            # ),
+            reminder_time=None,
             completed=False,
             # frequency=RecurringGoal.Frequency.MINUTELY,
             frequency=reminder_frequency_map.get(
@@ -71,14 +81,46 @@ def create_goal(goal_data, user):
             user=u,
             title=goal_data["name"],
             end_at=goal_data["dueDate"],
-            reminder_time=(
-                parse_time(goal_data["reminderTime"])
-                if goal_data["reminderTime"]
-                else None
-            ),
+            # reminder_time=(
+            #     parse_time(goal_data["reminderTime"])
+            #     if goal_data["reminderTime"]
+            #     else None
+            # ),
+            reminder_time=None,
             completed=False,
             importance=importance_map.get(goal_data["estimatedImportance"], 1),
         )
     g.save()
 
-    print(">>> Successfully added goal to the database!")
+    print(">>> Successfully added goal to the postgres database!")
+
+    create_goal_pinecone(
+        goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
+    )
+
+
+def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
+    """
+    Adds the goal to pinecone
+    """
+
+    # Retrieve embedding from description via cohere
+    co = cohere.Client(COHERE_API_KEY)
+    embeds = co.embed(
+        texts=[goal_description], model=COHERE_EMBED_MODEL, truncate="LEFT"
+    ).embeddings
+
+    # Open up pinecone connection (temp)
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
+    index = pinecone.Index(PINECONE_INDEX)
+
+    # Set user as metadata
+    metadata = {"user": user}
+    vector_item = (goal_id, embeds[0], metadata)
+
+    # Add goal to pinecone
+    index.upsert(vectors=[vector_item])
+
+    print(">>> Successfully added goal to Pinecone")
+
+    return True

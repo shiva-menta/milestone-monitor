@@ -16,6 +16,8 @@ black = "*"
 sentence-transformers = "*"
 pgvector = "*"
 django-celery-beat = "*"
+pinecone-client = "*"
+cohere = "*"
 
 [dev-packages]
 
