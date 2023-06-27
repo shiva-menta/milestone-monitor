@@ -1,15 +1,17 @@
 # Tools that will be used by the chatbot
 
 import json
+import os
 
 from datetime import datetime
 from re import sub
 
 from langchain import LLMChain
 from langchain.agents import tool, create_sql_agent
-
-# from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.memory import ConversationBufferWindowMemory
+
+import cohere
+import pinecone
 
 from utils.create_goal_chain import init_create_goal_chain
 from utils.embeddings import create_embedding
@@ -19,6 +21,12 @@ from utils.llm import BASE_LLM
 from utils.memory_utils import memory_to_dict
 from utils.msg_hist import update_user_convo_type, update_user_msg_memory
 from utils.sms import send_sms
+
+COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+PINECONE_ENV = os.environ.get("PINECONE_ENV")
+PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
+COHERE_EMBED_MODEL = "embed-english-light-v2.0"
 
 ##
 # GOAL CREATION
@@ -202,6 +210,23 @@ def get_conversational_create_goal_tool(user: str) -> callable:
 # - Ask question about goal
 # - Get goal specific info (database)
 ##
+
+
+def retrieve_goal_pinecone(query: str, user: str) -> str:
+    """
+    Retrieves a goal ID from Pinecone based on semantic similarity, filtered by user
+    """
+
+    co = cohere.Client(COHERE_API_KEY)
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
+    index = pinecone.Index(PINECONE_INDEX)
+
+    xq = co.embed(texts=[query], model=COHERE_EMBED_MODEL, truncate="LEFT").embeddings
+
+    res = index.query(
+        xq, top_k=1, include_metadata=False, filter={"user": {"$eq": user}}
+    )
+    return res["matches"][0]["id"]
 
 
 def fetch_goal_id(query: str, user: str) -> int:
