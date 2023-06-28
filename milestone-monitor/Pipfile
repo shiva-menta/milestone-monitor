@@ -18,6 +18,7 @@ pgvector = "*"
 django-celery-beat = "*"
 pinecone-client = "*"
 cohere = "*"
+celery-once = "*"
 
 [dev-packages]
 

@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import time
 from datetime import datetime
 
 import logging
@@ -15,7 +16,7 @@ from milestone_monitor.models import RecurringGoal, OneTimeGoal
 curr_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curr_dir)
 
-from tasks import chatbot_respond_async
+from conversation_tasks import chatbot_respond_async
 
 from utils.sms import send_sms
 from utils.interactions import create_goal
@@ -53,10 +54,19 @@ def receive_sms(request):
         request_msg = request.POST.get("Body", "")
         request_sndr = request.POST.get("From", "")
 
-        chatbot_respond_async(request_msg, request_sndr)
+        create_goal({
+            'number': request_sndr[1:],
+            'isRecurring': 0,
+            'name': request_msg,
+            'dueDate': datetime.strptime("2023-06-28T01:15:00", '%Y-%m-%dT%H:%M:%S'),
+            'reminderFrequency': 'MINUTELY',
+            'estimatedImportance': 'LOW',
+        }, request_sndr)
 
-        # return HttpResponse("Goal created.")
-        return HttpResponse("Queued chatbot respond job to Celery.")
+        # chatbot_respond_async(request_msg, request_sndr)
+
+        return HttpResponse("Goal created.")
+        # return HttpResponse("Queued chatbot respond job to Celery.")
 
 
 ##

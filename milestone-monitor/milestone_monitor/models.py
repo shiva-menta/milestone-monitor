@@ -3,7 +3,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 # from pgvector.django import VectorField
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from backend.celery import app
+from datetime import datetime
+
 import json
+from milestone_monitor.tasks import send_onetime_reminder_message
 
 
 class User(models.Model):
@@ -70,7 +74,7 @@ class RecurringGoal(models.Model):
         interval_schedule, created = self.interval_schedule
         self.task = PeriodicTask.objects.create(
             name=self.title,
-            task="send_reminder_message",
+            task="send_recurring_reminder_message",
             interval=interval_schedule,
             args=json.dumps([self.user.phone_number, self.title]),
             start_time=self.created_at,
@@ -111,3 +115,16 @@ class OneTimeGoal(models.Model):
     end_at = models.DateTimeField()
     completed = models.BooleanField(default=False)
     # embedding = VectorField(dimensions=384)
+    task_id = models.CharField(max_length=100, null=True)
+
+    def delete(self):
+        if self.task_id:
+            app.control.revoke(self.task_id)
+
+    def setup_task(self):
+        print('>>> Line hit')
+        print(type(self.end_at), datetime.now())
+        task = send_onetime_reminder_message.apply_async(args=[self.user.phone_number, self.title], eta=self.end_at)
+        print(task)
+        self.task_id = task.id
+        self.save()

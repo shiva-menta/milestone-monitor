@@ -6,7 +6,6 @@ from backend.settings import twilio_account_sid, twilio_auth, messaging_service_
 
 client = Client(twilio_account_sid, twilio_auth)
 
-
 def send_sms(number, body):
     """
     Send SMS message to input number with input body using Twilio messaging.

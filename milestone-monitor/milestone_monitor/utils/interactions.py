@@ -46,6 +46,7 @@ def create_goal(goal_data, user: str):
         "WEEKLY": RecurringGoal.Frequency.WEEKLY,
         "BIWEEKLY": RecurringGoal.Frequency.BIWEEKLY,
         "MONTHLY": RecurringGoal.Frequency.MONTHLY,
+        "MINUTELY": RecurringGoal.Frequency.MINUTELY,
     }
 
     importance_map = {
@@ -86,17 +87,18 @@ def create_goal(goal_data, user: str):
             #     if goal_data["reminderTime"]
             #     else None
             # ),
-            reminder_time=None,
             completed=False,
-            importance=importance_map.get(goal_data["estimatedImportance"], 1),
+            # importance=importance_map.get(goal_data["estimatedImportance"], 1),
         )
     g.save()
 
-    print(">>> Successfully added goal to the postgres database!")
+    return g
 
-    create_goal_pinecone(
-        goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
-    )
+    # print(">>> Successfully added goal to the postgres database!")
+
+    # create_goal_pinecone(
+    #     goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
+    # )
 
 
 def create_goal_pinecone(goal_id: str, goal_description: str, user: str):

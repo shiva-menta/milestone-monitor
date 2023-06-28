@@ -1,23 +1,22 @@
 # Manages the actual flow of conversation for the chatbot, loading in user memory,
 # the right chains, and taking other actions as necessary
 
-import json
 from datetime import datetime
 
 from django.http import HttpResponse
 
-from utils.sms import send_sms
-from utils.interactions import create_goal
-from utils.chatbot import get_main_chatbot
-from utils.memory_utils import dict_to_memory, memory_to_dict, create_main_memory
-from utils.create_goal_chain import get_create_goal_chain
-from utils.msg_hist import (
+from .sms import send_sms
+from .interactions import create_goal
+from .chatbot import get_main_chatbot
+from .memory_utils import dict_to_memory, memory_to_dict, create_main_memory
+from .create_goal_chain import get_create_goal_chain
+from .msg_hist import (
     get_user_hist,
     update_user_convo_type,
     update_user_msg_memory,
     create_default_user_hist,
 )
-from utils.goal_tools import (
+from .goal_tools import (
     parse_field_entries,
     format_text_fields,
     prettify_field_entries,

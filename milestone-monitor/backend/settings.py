@@ -32,7 +32,7 @@ ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
 # Celery Config
 CELERY_BROKER_URL = redis_url
 CELERY_RESULT_BACKEND = redis_url
-CELERY_TIMEZONE = "US/Eastern"
+CELERY_TIMEZONE = "America/New_York"
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Quick-start development settings - unsuitable for production
@@ -134,7 +134,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/New_York"
 
 USE_I18N = True
 
