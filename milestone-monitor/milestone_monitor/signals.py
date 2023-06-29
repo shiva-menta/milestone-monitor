@@ -6,7 +6,7 @@ from .models import RecurringGoal, OneTimeGoal
 @receiver(post_save, sender=RecurringGoal)
 def create_or_update_periodic_task(sender, instance, created, **kwargs):
     if created:
-        instance.setup_task()
+        instance.add_task()
     else:
         if instance.task is not None:
             instance.task.enabled = not instance.completed
