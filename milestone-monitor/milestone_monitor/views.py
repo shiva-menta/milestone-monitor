@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import pytz
 from datetime import datetime
 
 import logging
@@ -48,35 +47,13 @@ def receive_sms(request):
     if request.method == "POST":
         # logging.info("Received SMS message from user")
         print(">>> Received message from user")
-
         # TODO: validate user phone number here (or add international support)
 
         request_msg = request.POST.get("Body", "")
         request_sndr = request.POST.get("From", "")
 
-        naive_dt = datetime.strptime("2023-06-28T02:18:00", '%Y-%m-%dT%H:%M:%S')
-
-        # Assume that the naive datetime is in a certain timezone (e.g., New York)
-        ny_tz = pytz.timezone("America/New_York")
-        aware_dt = ny_tz.localize(naive_dt)
-
-        # Convert to UTC
-        utc_dt = aware_dt.astimezone(pytz.UTC)
-
-        g = create_goal({
-            'number': request_sndr[1:],
-            'isRecurring': 0,
-            'name': request_msg,
-            'dueDate': utc_dt,
-            'reminderFrequency': 'MINUTELY',
-            'estimatedImportance': 'LOW',
-        }, request_sndr)
-        # g.delete()
-
-        # chatbot_respond_async(request_msg, request_sndr)
-
-        return HttpResponse("Goal created.")
-        # return HttpResponse("Queued chatbot respond job to Celery.")
+        chatbot_respond_async(request_msg, request_sndr)
+        return HttpResponse("Queued chatbot respond job to Celery.")
 
 
 ##

@@ -7,7 +7,7 @@ from langchain.memory import ConversationBufferWindowMemory
 
 from utils.goal_prompts import GOAL_DB_AGENT_TOOL_DESC, GOAL_CREATE_TOOL_DESC
 from utils.goal_tools import get_conversational_create_goal_tool
-from utils.llm import BASE_CHATBOT_LLM
+from utils.llm import BASE_LLM
 from utils.msg_hist import get_user_hist
 
 MAIN_CHATBOT_PREFIX = """
@@ -53,7 +53,7 @@ def get_main_chatbot(
     # Initialize agent
     agent_chain = initialize_agent(
         generate_main_tools(user),
-        BASE_CHATBOT_LLM,
+        BASE_LLM,
         agent="chat-conversational-react-description",
         verbose=DEBUG,
         memory=memory,

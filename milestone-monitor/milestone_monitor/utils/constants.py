@@ -1,16 +1,16 @@
-from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
+from milestone_monitor.models import Frequency, Importance
 
 str_to_frequency = {
-  "HOURLY": RecurringGoal.Frequency.HOURLY,
-  "DAILY": RecurringGoal.Frequency.DAILY,
-  "WEEKLY": RecurringGoal.Frequency.WEEKLY,
-  "BIWEEKLY": RecurringGoal.Frequency.BIWEEKLY,
-  "MONTHLY": RecurringGoal.Frequency.MONTHLY,
-  "MINUTELY": RecurringGoal.Frequency.MINUTELY,
+  "HOURLY": Frequency.HOURLY,
+  "DAILY": Frequency.DAILY,
+  "WEEKLY": Frequency.WEEKLY,
+  "BIWEEKLY": Frequency.BIWEEKLY,
+  "MONTHLY": Frequency.MONTHLY,
+  "MINUTELY": Frequency.MINUTELY,
 }
 
 str_to_importance = {
-  "LOW": RecurringGoal.Importance.LOW,
-  "MEDIUM": RecurringGoal.Importance.MEDIUM,
-  "HIGH": RecurringGoal.Importance.HIGH,
+  "LOW": Importance.LOW,
+  "MEDIUM": Importance.MEDIUM,
+  "HIGH": Importance.HIGH,
 }

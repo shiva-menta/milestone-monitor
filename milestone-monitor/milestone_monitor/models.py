@@ -20,7 +20,7 @@ class Frequency(models.IntegerChoices):
     WEEKLY = 2
     BIWEEKLY = 3
     MONTHLY = 4
-    BI_MINUTELY = 99
+    MINUTELY = 99
 
 class User(models.Model):
     """
@@ -34,6 +34,7 @@ class User(models.Model):
             MinValueValidator(1_000_000_0000),
             MaxValueValidator(1_999_999_9999),
         ],
+        unique=True
     )
 
     # Model Functions
@@ -54,7 +55,7 @@ class RecurringGoal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     end_at = models.DateTimeField(default=None, null=True)
-    reminder_start_time = models.DateTimeField()
+    reminder_start_time = models.DateTimeField(auto_now_add=True)
     is_running = models.BooleanField(default=True)
     completed = models.BooleanField(default=False)
     task = models.OneToOneField(

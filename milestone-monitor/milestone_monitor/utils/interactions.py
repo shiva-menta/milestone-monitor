@@ -1,4 +1,5 @@
 import os
+import pytz
 from django.conf import settings
 from django.db.models import F, Max, OuterRef, Q, Subquery, Value
 from django.utils.dateparse import parse_datetime, parse_time
@@ -7,7 +8,8 @@ import cohere
 import pinecone
 
 from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
-from constants import str_to_frequency, str_to_importance
+from .constants import str_to_frequency, str_to_importance
+from datetime import datetime, timedelta
 
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
@@ -15,9 +17,21 @@ PINECONE_ENV = os.environ.get("PINECONE_ENV")
 PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
 COHERE_EMBED_MODEL = "embed-english-light-v2.0"
 
-def create_goal(goal_data: dict, user: str):
+def get_and_create_user(phone_number: str):
+    user = None
+    try:
+        user = User.objects.get(phone_number)
+    except:
+        user = User(phone_number=phone_number)
+        user.save()
+
+    return user
+
+def create_goal(goal_data: dict, phone_number: str):
     """
     Creates a goal based on input data for a specific user.
+
+    NEED TIMEZONE FEATURE
 
     goal_data: – can we move this somewhere else potentially – looks kind of messy right here
       - name: string
@@ -32,44 +46,40 @@ def create_goal(goal_data: dict, user: str):
       - isRecurring: 0 | 1
     user: string (of the form "+12345678901")
     """
+    # Step 1: get current user
+    parsed_user_number = int(phone_number[1:])
+    user = get_and_create_user(parsed_user_number)
+    # Step 2: format common necessary data for goal
+    # Assume that the naive datetime is in a certain timezone (e.g., New York)
+    # ny_tz = pytz.timezone("America/New_York")
+    # aware_dt = ny_tz.localize(naive_dt)
+    # utc_dt = aware_dt.astimezone(pytz.UTC)
 
-    # Step 1: get current user based on phone number or create new user
-    # Step 2: format necessary data for goal
-    # Step 3: actually greate goal
-
-    # TODO: validate `status`
-
-    # Create and save user (TODO: why are we doing this every time?)
-    parsed_user_number = int(user[1:])  # assumes valid US format
-    u = User(name="MM", phone_number=parsed_user_number)
-    u.save()
-
-    
-
-    # Create and save goal in postgres
+    title = goal_data["name"]
+    importance = str_to_importance.get(
+        goal_data["estimatedImportance"], RecurringGoal.Importance.LOW
+    )
+    # Step 3: actually create goal
     g = None
     if goal_data["isRecurring"]:
         g = RecurringGoal(
-            user=u,
-            title=goal_data["name"],
-            importance=str_to_importance.get(
-                goal_data["estimatedImportance"], RecurringGoal.Importance.LOW
-            ),
+            user=user,
+            title=title,
+            importance=importance,
             frequency=str_to_frequency.get(
                 goal_data["reminderFrequency"], RecurringGoal.Frequency.DAILY
             ),
             end_at=goal_data["dueDate"],
-            reminder_start_time='',
+            reminder_start_time=goal_data.get("reminderTime", datetime.now() + timedelta(minuutes=5)),
         )
     else:
         g = OneTimeGoal(
-            user=u,
-            title=goal_data["name"],
-            importance='',
+            user=user,
+            title=title,
+            importance=importance,
             end_at=goal_data["dueDate"],
         )
     g.save()
-
     return g
 
     # print(">>> Successfully added goal to the postgres database!")
