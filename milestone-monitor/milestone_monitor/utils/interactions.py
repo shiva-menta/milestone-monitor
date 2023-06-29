@@ -1,5 +1,3 @@
-# Utils for interacting with the databases
-
 import os
 from django.conf import settings
 from django.db.models import F, Max, OuterRef, Q, Subquery, Value
@@ -9,6 +7,7 @@ import cohere
 import pinecone
 
 from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
+from constants import str_to_frequency, str_to_importance
 
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
@@ -16,10 +15,11 @@ PINECONE_ENV = os.environ.get("PINECONE_ENV")
 PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
 COHERE_EMBED_MODEL = "embed-english-light-v2.0"
 
-
-def create_goal(goal_data, user: str):
+def create_goal(goal_data: dict, user: str):
     """
-    goal_data:
+    Creates a goal based on input data for a specific user.
+
+    goal_data: – can we move this somewhere else potentially – looks kind of messy right here
       - name: string
       - description: string
       - estimatedImportance: 'HIGH' | 'MEDIUM' | 'LOW'
@@ -33,6 +33,10 @@ def create_goal(goal_data, user: str):
     user: string (of the form "+12345678901")
     """
 
+    # Step 1: get current user based on phone number or create new user
+    # Step 2: format necessary data for goal
+    # Step 3: actually greate goal
+
     # TODO: validate `status`
 
     # Create and save user (TODO: why are we doing this every time?)
@@ -40,20 +44,7 @@ def create_goal(goal_data, user: str):
     u = User(name="MM", phone_number=parsed_user_number)
     u.save()
 
-    reminder_frequency_map = {
-        "HOURLY": RecurringGoal.Frequency.HOURLY,
-        "DAILY": RecurringGoal.Frequency.DAILY,
-        "WEEKLY": RecurringGoal.Frequency.WEEKLY,
-        "BIWEEKLY": RecurringGoal.Frequency.BIWEEKLY,
-        "MONTHLY": RecurringGoal.Frequency.MONTHLY,
-        "MINUTELY": RecurringGoal.Frequency.MINUTELY,
-    }
-
-    importance_map = {
-        "LOW": RecurringGoal.Importance.LOW,
-        "MEDIUM": RecurringGoal.Importance.MEDIUM,
-        "HIGH": RecurringGoal.Importance.HIGH,
-    }
+    
 
     # Create and save goal in postgres
     g = None
@@ -61,34 +52,21 @@ def create_goal(goal_data, user: str):
         g = RecurringGoal(
             user=u,
             title=goal_data["name"],
-            end_at=goal_data["dueDate"],
-            # reminder_time=(
-            #     parse_time(goal_data["reminderTime"])
-            #     if goal_data["reminderTime"]
-            #     else None
-            # ),
-            reminder_time=None,
-            completed=False,
-            # frequency=RecurringGoal.Frequency.MINUTELY,
-            frequency=reminder_frequency_map.get(
-                goal_data["reminderFrequency"], RecurringGoal.Frequency.DAILY
-            ),
-            importance=importance_map.get(
+            importance=str_to_importance.get(
                 goal_data["estimatedImportance"], RecurringGoal.Importance.LOW
             ),
+            frequency=str_to_frequency.get(
+                goal_data["reminderFrequency"], RecurringGoal.Frequency.DAILY
+            ),
+            end_at=goal_data["dueDate"],
+            reminder_start_time='',
         )
     else:
         g = OneTimeGoal(
             user=u,
             title=goal_data["name"],
+            importance='',
             end_at=goal_data["dueDate"],
-            # reminder_time=(
-            #     parse_time(goal_data["reminderTime"])
-            #     if goal_data["reminderTime"]
-            #     else None
-            # ),
-            completed=False,
-            # importance=importance_map.get(goal_data["estimatedImportance"], 1),
         )
     g.save()
 
@@ -99,6 +77,19 @@ def create_goal(goal_data, user: str):
     # create_goal_pinecone(
     #     goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
     # )
+
+def modify_goal(goal_type: int, goal_id: int, data=dict):
+    """
+    Modifies current goal based on a dict of information. Models' modify functions
+    check against its attribute keys. Functions can handle almost any combination of
+    inputs, allowing for flexible modify queries.
+    """
+    goal_instance = None
+    if goal_type:
+        goal_instance = RecurringGoal.objects.get(id=goal_id)
+    else:
+        goal_instance = OneTimeGoal.objects.get(id=goal_id)
+    goal_instance.modify(data)
 
 
 def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
