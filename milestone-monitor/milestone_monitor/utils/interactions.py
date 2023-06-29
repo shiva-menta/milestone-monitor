@@ -91,17 +91,26 @@ def create_goal(goal_data, user: str):
             importance=importance_map.get(goal_data["estimatedImportance"], 1),
         )
     g.save()
+    goal_id = g.id
 
     print(">>> Successfully added goal to the postgres database!")
 
     create_goal_pinecone(
-        goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
+        goal_id=goal_id,
+        is_recurring=goal_data["isRecurring"],
+        goal_description=goal_data["description"],
+        user=user,
     )
 
 
-def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
+def create_goal_pinecone(
+    goal_id: int, is_recurring: 0, goal_description: str, user: str
+):
     """
     Adds the goal to pinecone
+
+    goal_id: django id for the goal
+    goal_type:
     """
 
     # Retrieve embedding from description via cohere
@@ -114,8 +123,11 @@ def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
     index = pinecone.Index(PINECONE_INDEX)
 
-    # Set user as metadata
-    metadata = {"user": user}
+    # Set metadata
+    metadata = {
+        "user": user,
+        "is_recurring": is_recurring,
+    }
     vector_item = (goal_id, embeds[0], metadata)
 
     # Add goal to pinecone

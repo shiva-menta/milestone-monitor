@@ -22,11 +22,13 @@ from utils.interactions import create_goal
 from utils.chatbot import get_main_chatbot
 from utils.memory_utils import dict_to_memory, memory_to_dict, create_main_memory
 from utils.create_goal_chain import get_create_goal_chain
-from utils.msg_hist import (
+from utils.redis_user_data import (
     get_user_hist,
     update_user_convo_type,
     update_user_msg_memory,
     create_default_user_hist,
+    set_conversation_inactive,
+    pop_pending_messages,
 )
 from utils.goal_tools import parse_field_entries, format_text_fields
 from utils.conversation_handler import chatbot_respond
@@ -53,7 +55,7 @@ def receive_sms(request):
         request_msg = request.POST.get("Body", "")
         request_sndr = request.POST.get("From", "")
 
-        chatbot_respond_async(request_msg, request_sndr)
+        chatbot_respond_async.s(request_msg, request_sndr).apply_async()
 
         # return HttpResponse("Goal created.")
         return HttpResponse("Queued chatbot respond job to Celery.")
@@ -87,6 +89,8 @@ def reset_user(request):
 
     user = body_data["user"]
     create_default_user_hist(user)
+    set_conversation_inactive(user)
+    pop_pending_messages(user)
 
     return HttpResponse("User data reset.")
 

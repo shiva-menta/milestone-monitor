@@ -17,9 +17,9 @@ from utils.create_goal_chain import init_create_goal_chain
 from utils.embeddings import create_embedding
 from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
 from utils.interactions import create_goal
-from utils.llm import BASE_LLM
+from utils.llm import BASE_CHATBOT_LLM
 from utils.memory_utils import memory_to_dict
-from utils.msg_hist import update_user_convo_type, update_user_msg_memory
+from utils.redis_user_data import update_user_convo_type, update_user_msg_memory
 from utils.sms import send_sms
 
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
@@ -38,7 +38,7 @@ goal_create_memory = ConversationBufferWindowMemory(
 )
 
 create_goal_chain = LLMChain(
-    llm=BASE_LLM,
+    llm=BASE_CHATBOT_LLM,
     prompt=create_goal_chain_prompt,
     verbose=True,
     memory=goal_create_memory,

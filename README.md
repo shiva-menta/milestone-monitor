@@ -63,3 +63,4 @@ PINECONE_INDEX=`milestone-monitor`
 - Make sure Docker Desktop is open, and run `docker-compose up`
 - `python3 manage.py migrate` (in the original terminal window)
 - `./runserver.sh` to run the server
+- If you would like to listen to the logs for the Celery workers, tail -f celery.worker.log

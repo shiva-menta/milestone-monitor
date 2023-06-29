@@ -11,7 +11,7 @@ from utils.interactions import create_goal
 from utils.chatbot import get_main_chatbot
 from utils.memory_utils import dict_to_memory, memory_to_dict, create_main_memory
 from utils.create_goal_chain import get_create_goal_chain
-from utils.msg_hist import (
+from utils.redis_user_data import (
     get_user_hist,
     update_user_convo_type,
     update_user_msg_memory,
@@ -30,14 +30,12 @@ def chatbot_respond(query, user):
     print(">>> CHATBOT IS RESPONDING")
     # Get user data
     user_data = get_user_hist(user)
-    print(user_data)
 
     # Main conversation chain:
     # - The user is currently not in the middle of discussing adding a goal
     # - But this could trigger adding a goal
     if user_data["current_convo_type"] == "main":
         # Load memory
-        print(user_data["main_memory"])
         main_memory = dict_to_memory(user_data["main_memory"])
 
         if main_memory is None:
@@ -49,6 +47,8 @@ def chatbot_respond(query, user):
         # Get output from the chatbot
         # if we entered the create goal convo, it automatically
         # uses that output
+        print("Query:", query)
+        print("Memory:", main_memory)
         output = chatbot.run(input=query)
 
         # Save memory
@@ -112,5 +112,7 @@ def chatbot_respond(query, user):
             output = f"{pretty_field_entries}\n\n{current_conversational_output}"
 
     # Send output as an SMS
+    # send_sms(user, output)
+    # print(output)
     send_sms(user, output)
     return HttpResponse("Text sent.")

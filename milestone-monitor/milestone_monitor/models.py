@@ -1,8 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
-# from pgvector.django import VectorField
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
 import json
 
 
@@ -50,7 +49,6 @@ class RecurringGoal(models.Model):
     end_at = models.DateTimeField(blank=True, null=True)
     reminder_time = models.TimeField(null=True)
     completed = models.BooleanField(default=False)
-    # embedding = VectorField(dimensions=384)
     frequency = models.IntegerField(choices=Frequency.choices)
     importance = models.IntegerField(choices=Importance.choices)
     task = models.OneToOneField(
