@@ -2,6 +2,7 @@ import os
 import sys
 import json
 from datetime import datetime
+from twilio.request_validator import RequestValidator
 
 import logging
 
@@ -9,6 +10,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
+from backend.decorators import validate_twilio_request
 
 from milestone_monitor.models import RecurringGoal, OneTimeGoal
 
@@ -31,8 +33,8 @@ from utils.msg_hist import (
 from utils.goal_tools import parse_field_entries, format_text_fields
 from utils.conversation_handler import chatbot_respond
 
-
 @csrf_exempt
+@validate_twilio_request
 def receive_sms(request):
     print(">>> Hit `receive_sms` endpoint")
     """
@@ -44,6 +46,8 @@ def receive_sms(request):
     Twilio sends POST requests: https://www.twilio.com/docs/messaging/guides/webhook-request
     - Phone number will look like "+14017122661"
     """
+    
+    
     if request.method == "POST":
         # logging.info("Received SMS message from user")
         print(">>> Received message from user")
