@@ -37,7 +37,7 @@ class User(models.Model):
     )
 
     # Model Functions
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} – {self.phone_number}"
 
 
@@ -87,7 +87,7 @@ class RecurringGoal(models.Model):
 
     # Model Functions
     # TODO: schedule one time task for end of recurring?
-    def add_task(self):
+    def add_task(self) -> None:
         interval_schedule, _ = self.interval_schedule
         task_kwargs = {
             'name': self.title,
@@ -101,14 +101,12 @@ class RecurringGoal(models.Model):
         self.task = PeriodicTask.objects.create(**task_kwargs)
         self.save()
 
-    def delete(self, *args, **kwargs):
+    def delete_task(self) -> None:
         if self.task is not None:
             self.task.delete()
 
-        return super(self.__class__, self).delete(*args, **kwargs)
-
     @transaction.atomic
-    def modify(self, data):
+    def modify(self, data) -> None:
         delete_curr_task = False
         issue_new_task = False  # issuing new task implies deleting current, but not vice versa
 
@@ -192,15 +190,15 @@ class OneTimeGoal(models.Model):
     task_id = models.CharField(max_length=100, null=True)
 
     # Model Functions
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.title} – {self.end_at}"
 
-    def add_task(self):
+    def add_task(self) -> None:
         task = send_onetime_reminder_message.apply_async(args=[self.user.phone_number, self.title], eta=self.end_at)
         self.task_id = task.id
         self.save()
     
-    def delete_task(self):
+    def delete_task(self) -> None:
         if self.task_id:
             try:
                 app.control.revoke(self.task_id)
@@ -208,7 +206,7 @@ class OneTimeGoal(models.Model):
                 print('Task has previously been deleted.')
     
     @transaction.atomic
-    def modify(self, data):
+    def modify(self, data) -> None:
         issue_new_task = False
 
         if 'title' in data:
