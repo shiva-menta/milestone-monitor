@@ -16,7 +16,7 @@ def send_recurring_reminder_message(number, task_title):
         """,
     )
 
-@shared_task(base=QueueOnce, name="send_onetime_reminder_message", once={'graceful': True})
+@shared_task(name="send_onetime_reminder_message")
 def send_onetime_reminder_message(number, task_title):
     send_sms(
         "+" + str(number),

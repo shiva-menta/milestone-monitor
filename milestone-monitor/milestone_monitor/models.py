@@ -1,13 +1,13 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
-# from pgvector.django import VectorField
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from backend.celery import app
-from datetime import datetime
 
 import json
 from milestone_monitor.tasks import send_onetime_reminder_message
+from datetime import datetime
 
 
 class User(models.Model):
@@ -27,7 +27,7 @@ class User(models.Model):
     def __str__(self):
         return f"{self.name} – {self.phone_number}"
 
-
+# TODO: clean up any unnecessary features, add custom modify function (what form should I assume this comes in)
 class RecurringGoal(models.Model):
     """
     Represents all users' recurring goals (habits) they're trying to accomplish.
@@ -63,6 +63,8 @@ class RecurringGoal(models.Model):
         null=True,
         blank=True,
     )
+
+    
 
     def delete(self, *args, **kwargs):
         if self.task is not None:
@@ -102,29 +104,62 @@ class RecurringGoal(models.Model):
             )
         )
 
-
 class OneTimeGoal(models.Model):
     """
     Represents all users' one time goals (tasks) they're trying to accomplish.
     """
-
+    # Model Attributes
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True) 
     end_at = models.DateTimeField()
     completed = models.BooleanField(default=False)
-    # embedding = VectorField(dimensions=384)
     task_id = models.CharField(max_length=100, null=True)
 
-    def delete(self):
-        if self.task_id:
-            app.control.revoke(self.task_id)
-
-    def setup_task(self):
-        print('>>> Line hit')
-        print(type(self.end_at), datetime.now())
+    # Model Functions
+    def add_task(self):
         task = send_onetime_reminder_message.apply_async(args=[self.user.phone_number, self.title], eta=self.end_at)
-        print(task)
         self.task_id = task.id
+        self.save()
+    
+    def delete_task(self):
+        if self.task_id:
+            try:
+                app.control.revoke(self.task_id)
+            except:
+                print('Task has previously been deleted.')
+    
+    @transaction.atomic
+    def modify(self, data):
+        issue_new_task = False
+
+        if 'title' in data:
+            issue_new_task = True
+            if len(data['title']) <= 100:
+                self.title = data['title']
+            else:
+                raise Exception("Invalid title given.")
+
+        if 'end_at' in data:
+            issue_new_task = True
+            if (data['end_at'] - self.end_at).total_seconds() > 60:
+                self.end_at = data['end_at']
+            else:
+                raise Exception("Invalid date given.")
+
+        if 'completed' in data:
+            if not data['completed']:
+                raise Exception("Cannot make previous goal incomplete. Set a new goal instead.")
+            if (datetime.now() - self.end_at) < 0:
+                issue_new_task = False
+                self.delete_task()
+            self.completed = True
+            self.task_id = None
+
+        if issue_new_task:
+            self.delete_task()
+            self.add_task()
+
+        self.updated_at = datetime.now()
         self.save()

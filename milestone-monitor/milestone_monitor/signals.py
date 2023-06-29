@@ -15,4 +15,4 @@ def create_or_update_periodic_task(sender, instance, created, **kwargs):
 @receiver(post_save, sender=OneTimeGoal)
 def create_or_update_periodic_task(sender, instance, created, **kwargs):
     if created:
-        instance.setup_task()
+        instance.add_task()

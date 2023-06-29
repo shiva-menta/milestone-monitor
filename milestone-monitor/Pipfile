@@ -19,6 +19,7 @@ django-celery-beat = "*"
 pinecone-client = "*"
 cohere = "*"
 celery-once = "*"
+pytz = "*"
 
 [dev-packages]
 
