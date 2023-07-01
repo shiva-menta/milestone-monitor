@@ -2,21 +2,24 @@
 
 import json
 import os
+import traceback
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from re import sub
 
 from langchain import LLMChain
 from langchain.agents import tool, create_sql_agent
 from langchain.memory import ConversationBufferWindowMemory
 
-import cohere
-import pinecone
-
+from utils.constants import str_to_frequency, str_to_importance
 from utils.create_goal_chain import init_create_goal_chain
-from utils.embeddings import create_embedding
 from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
-from utils.interactions import create_goal
+from utils.interactions import (
+    create_goal,
+    get_goal_info,
+    retrieve_goal_pinecone,
+    modify_goal,
+)
 from utils.llm import BASE_CHATBOT_LLM
 from utils.memory_utils import memory_to_dict
 from utils.redis_user_data import update_user_convo_type, update_user_msg_memory
@@ -88,8 +91,8 @@ def format_text_fields(fields: dict):
             int(fields["Due Date Year"]),
             int(fields["Due Date Month"]),
             int(fields["Due Date Day"]),
-            int(fields["Due Date Hour"]),
-            int(fields["Due Date Minute"]),
+            int(0 if fields["Due Date Hour"] == "N/A" else fields["Due Date Hour"]),
+            int(0 if fields["Due Date Minute"] == "N/A" else fields["Due Date Minute"]),
         )
     fields["Is Recurring"] = (int)(fields["Goal Type"] == "RECURRING")
 
@@ -143,7 +146,7 @@ def prettify_field_entries(fields: dict):
 
 
 # Function that RETURNS a user-specific tool for creating a goal
-def get_conversational_create_goal_tool(user: str) -> callable:
+def init_conversational_create_goal_tool(user: str) -> callable:
     @tool
     def conversational_create_goal_tool(query: str) -> str:
         """
@@ -205,7 +208,7 @@ def get_conversational_create_goal_tool(user: str) -> callable:
 
 
 ##
-# GOAL READING
+# GOAL READING/EDITING
 # Available tools:
 # - Summarize goal recent activity
 # - Ask question about goal
@@ -213,38 +216,56 @@ def get_conversational_create_goal_tool(user: str) -> callable:
 ##
 
 
-def retrieve_goal_pinecone(query: str, user: str) -> str:
-    """
-    Retrieves a goal ID from Pinecone based on semantic similarity, filtered by user
-    """
-
-    co = cohere.Client(COHERE_API_KEY)
-    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
-    index = pinecone.Index(PINECONE_INDEX)
-
-    xq = co.embed(texts=[query], model=COHERE_EMBED_MODEL, truncate="LEFT").embeddings
-
-    res = index.query(
-        xq, top_k=1, include_metadata=False, filter={"user": {"$eq": user}}
-    )
-    return res["matches"][0]["id"]
-
-
-def fetch_goal_id(query: str, user: str) -> int:
-    """
-    Helper function that fetches the appropriate goal ID given an input query
-    """
-    pass
-
-
-def get_retrieve_goal_id_tool(user: str) -> callable:
+def init_get_specific_goal_tool(user: str) -> callable:
     @tool
-    def specific_goal_info_tool(query: str) -> str:
+    def get_specific_goal_tool(goal_name_query: str) -> str:
         """
         A tool used to retrieve info about a specific goal.
         """
-        query_embedding = create_embedding(query)
-        return "Info"
+        goal_type, goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
+
+        return get_goal_info(goal_id, goal_type)
+
+    return get_specific_goal_tool
+
+
+def init_modify_specific_goal_tool(user: str) -> callable:
+    @tool
+    def modify_specific_goal_tool(query: str) -> str:
+        """
+        A tool used to edit information about a specific goal.
+        """
+
+        print(query)
+
+        goal_name_query, modifications = query.split(": ", 1)
+        modifications = json.loads(modifications)
+        if "reminder_start_time" in modifications.keys():
+            new_time = datetime.strptime(
+                modifications["reminder_start_time"], "%H:%M:%S"
+            ).time()
+            tomorrow = datetime.now() + timedelta(days=1)
+            modifications["reminder_start_time"] = datetime.combine(tomorrow, new_time)
+        if "frequency" in modifications.keys():
+            modifications["frequency"] = str_to_frequency(modifications["frequency"])
+        if "importance" in modifications.keys():
+            modifications["importance"] = str_to_importance(modifications["importance"])
+
+        print(modifications)
+
+        # Retrieve goal by query
+        goal_type, goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
+
+        # Update goal fields
+        try:
+            modify_goal(goal_type, goal_id, modifications)
+            return "Goal modified successfully!"
+        except Exception:
+            print(traceback.format_exc())
+            # print(e)
+            return "Error occurred when modifying goal."
+
+    return modify_specific_goal_tool
 
 
 # goal_db_toolkit = SQLDatabaseToolkit(db=goal_database)
