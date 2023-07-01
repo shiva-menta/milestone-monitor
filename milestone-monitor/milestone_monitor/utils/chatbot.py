@@ -3,8 +3,16 @@
 from langchain.agents import AgentExecutor, AgentType, Tool, initialize_agent
 from langchain.memory import ConversationBufferWindowMemory
 
-from utils.goal_prompts import GOAL_DB_AGENT_TOOL_DESC, GOAL_CREATE_TOOL_DESC
-from utils.goal_tools import get_conversational_create_goal_tool
+from utils.goal_prompts import (
+    GOAL_CREATE_TOOL_DESC,
+    GOAL_SPECIFIC_INFO_TOOL_DESC,
+    GOAL_EDIT_TOOL_DESC,
+)
+from utils.goal_tools import (
+    init_conversational_create_goal_tool,
+    init_get_specific_goal_tool,
+    init_modify_specific_goal_tool,
+)
 from utils.llm import BASE_CHATBOT_LLM
 
 # MAIN_CHATBOT_PREFIX = """
@@ -17,17 +25,22 @@ from utils.llm import BASE_CHATBOT_LLM
 # Generates the tools for a specific user
 def generate_main_tools(user: str):
     tools = [
-        # Tool(
-        #     name="Goal Database Agent",
-        #     func=XXX
-        #     description=GOAL_DB_AGENT_TOOL_DESC
-        # ),
         Tool(
             name="Create Goal",
-            func=get_conversational_create_goal_tool(user),
+            func=init_conversational_create_goal_tool(user),
             description=GOAL_CREATE_TOOL_DESC,
             return_direct=True,
-        )
+        ),
+        Tool(
+            name="Get Specific Goal Info",
+            func=init_get_specific_goal_tool(user),
+            description=GOAL_SPECIFIC_INFO_TOOL_DESC,
+        ),
+        Tool(
+            name="Modify Specific Goal Info",
+            func=init_modify_specific_goal_tool(user),
+            description=GOAL_EDIT_TOOL_DESC,
+        ),
     ]
 
     return tools
@@ -50,12 +63,12 @@ def get_main_chatbot(
     # HACK:
     def _handle_error(error) -> str:
         print(error)
-        return str(error)[:50]
+        return str(error)
 
     # Initialize agent
-    print("hellooooo")
+    print()
     agent_chain = initialize_agent(
-        agent="conversational-react-description",
+        agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
         tools=generate_main_tools(user),
         llm=BASE_CHATBOT_LLM,
         verbose=DEBUG,
@@ -63,7 +76,7 @@ def get_main_chatbot(
         handle_parsing_errors=_handle_error,
         # agent_kwargs={"prefix": MAIN_CHATBOT_PREFIX},
     )
-    print("PROMPT TEMPLATE:", agent_chain.agent.llm_chain.prompt.template)
+    print("PROMPT TEMPLATE:", agent_chain.agent.llm_chain.prompt)
 
     # Call the agent using agent.run(input="...")
     return agent_chain

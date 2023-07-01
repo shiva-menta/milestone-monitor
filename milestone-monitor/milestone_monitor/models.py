@@ -9,11 +9,14 @@ import json
 from milestone_monitor.tasks import send_final_task_message
 from datetime import datetime
 
+
 # Attribute Custom Fields
 class Importance(models.IntegerChoices):
     LOW = 1
     MEDIUM = 2
     HIGH = 3
+
+
 class Frequency(models.IntegerChoices):
     HOURLY = 0
     DAILY = 1
@@ -22,10 +25,12 @@ class Frequency(models.IntegerChoices):
     MONTHLY = 4
     MINUTELY = 99
 
+
 class User(models.Model):
     """
     Represents an individual user of MM.
     """
+
     # Model Attributes
     name = models.CharField(max_length=100, blank=True)
     phone_number = models.BigIntegerField(
@@ -34,7 +39,7 @@ class User(models.Model):
             MinValueValidator(1_000_000_0000),
             MaxValueValidator(1_999_999_9999),
         ],
-        unique=True
+        unique=True,
     )
 
     # Model Functions

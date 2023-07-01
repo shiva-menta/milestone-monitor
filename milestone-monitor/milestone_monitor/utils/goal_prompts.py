@@ -1,11 +1,28 @@
 from langchain.prompts.prompt import PromptTemplate
 
 GOAL_DB_AGENT_TOOL_DESC = "Useful for when you need to answer questions about the user's goals, habits, or tasks, particularly when comparing many or all of the goals, habits, or tasks to each other. The input should be a question comparing many different goals (such as \"What's the goal I've completed most recently?\") or a question regarding temporal, numerical, or statistical data related to goals."
-GOAL_UPDATE_DESC = 'Useful for when the user has provided an update related to one of their existing goals, habits, or tasks. The user may indicate this by saying something similar to "I didn\'t get to finish [GOAL]", "I did [GOAL] today", or "I really want to start [GOAL] again". The input to this should be of the form "[GOAL]: [GOAL DESCRIPTION]", where [GOAL] is the name of the goal, and [GOAL UPDATE DESCRIPTION] is a detailed description of the update to goal, habit, or task.'
-GOAL_CREATE_TOOL_DESC = """Useful for when the user has provided you with information on a new goal, habit, or task that they would like to start and eventually complete. 
+# GOAL_UPDATE_DESC = 'Useful for when the user has provided an update related to one of their existing goals, habits, or tasks. The user may indicate this by saying something similar to "I didn\'t get to finish [GOAL]", "I did [GOAL] today", or "I really want to start [GOAL] again". The input to this should be of the form "[GOAL]: [GOAL DESCRIPTION]", where [GOAL] is the name of the goal, and [GOAL UPDATE DESCRIPTION] is a detailed description of the update to goal, habit, or task.'
+
+GOAL_CREATE_TOOL_DESC = """Useful for when the user has provided you with specific information on a new goal, habit, or task that they would like to start and eventually complete. 
 The user may indicate this by saying something similar to \"I want to do [GOAL]\", \"I need to [GOAL]\", or \"I have [GOAL] due soon\". 
 The input to this should be of the form \"[GOAL]: [GOAL DESCRIPTION]\", where [GOAL] is the name of the goal, and [GOAL DESCRIPTION] is a detailed description of the goal, habit, or task, including all possible information. 
-Please do not include any information in the description other than what the user has specified."""
+Please do not include any information in the description other than what the user has specified. Do not use this tool if the user doesn't know what goal they want."""
+GOAL_SPECIFIC_INFO_TOOL_DESC = """Useful for when the user asks about any information related to a specific goal, such as the reminder times, progress, or other specific information. You can guess the name based on what the user is talking about.
+The user may indicate this by asking \"how is [GOAL] going?\" or \"when is the last time I did [GOAL]?\" or if the user asks about anything for [GOAL]. The input for this tool should be \"[GOAL NAME]\", where [GOAL NAME] is the name
+of the goal you think the user is talking about. When returning information, make sure to format it in an easy-to-read way."""
+GOAL_EDIT_TOOL_DESC = """Useful for when the user wants to modify specific information about a goal, or has an update about a specific goal. This could be referring to the completion of the goal, reminder times, priority level,
+or anything else that should be modified. The user may indicate this by asking something like \"I'm done with [GOAL NAME]\" or \"Can you turn off reminders for [GOAL NAME]\" The expected input for this tool should be \"[GOAL NAME]: [MODIFICATIONS DICTIONARY]\", where
+[GOAL] is your best guess at the name of the goal, and [MODIFICATIONS DICTIONARY] is a Python dictionary with double quotes with the following optional fields:
+- `importance`: should be one of "LOW", "MEDIUM", or "HIGH"
+- `frequency`: should be one of "HOURLY", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"
+- `reminder_start_time`: the time of the day reminders will be sent at, should be in the exact form "%H:%M:%S"
+- `completed`: whether or not the goal has been completed
+
+For example, if the user says they want to switch their reminder time for exercising to the evening, you might input
+\"Exercise more: {{"reminder_start_time": "18:30:00"}}\"
+
+Please only modify necessary fields for what the user is requesting or indicating.
+"""
 
 # TODO: Add in column descriptions and list of all goal names available
 GOAL_DB_PREFIX = """You are an agent designed to interact with a SQL database containing information on user goals, which can be habits, tasks, items to do, or other types of goals.

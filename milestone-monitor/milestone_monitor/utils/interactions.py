@@ -1,5 +1,6 @@
 import os
 import pytz
+from typing import Tuple
 from django.conf import settings
 from django.db.models import F, Max, OuterRef, Q, Subquery, Value
 from django.utils.dateparse import parse_datetime, parse_time
@@ -8,7 +9,7 @@ import cohere
 import pinecone
 
 from milestone_monitor.models import User, Goal, Importance, Frequency
-from .constants import str_to_frequency, str_to_importance
+from .constants import str_to_frequency, str_to_importance, frequency_to_str, importance_to_str
 from datetime import datetime, timedelta
 from django.forms.models import model_to_dict
 
@@ -17,6 +18,7 @@ PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 PINECONE_ENV = os.environ.get("PINECONE_ENV")
 PINECONE_INDEX = os.environ.get("PINECONE_INDEX")
 COHERE_EMBED_MODEL = "embed-english-light-v2.0"
+
 
 def get_and_create_user(phone_number: str):
     user = None
@@ -27,6 +29,7 @@ def get_and_create_user(phone_number: str):
         user.save()
 
     return user
+
 
 def create_goal(goal_data: dict, phone_number: str):
     """
@@ -57,9 +60,7 @@ def create_goal(goal_data: dict, phone_number: str):
     # utc_dt = aware_dt.astimezone(pytz.UTC)
 
     title = goal_data["name"]
-    importance = str_to_importance.get(
-        goal_data["estimatedImportance"], Importance.LOW
-    )
+    importance = str_to_importance.get(goal_data["estimatedImportance"], Importance.LOW)
     # Step 3: actually create goal
     g = Goal(
         user=user,
@@ -70,9 +71,13 @@ def create_goal(goal_data: dict, phone_number: str):
     goal_id = g.id
     return goal_id
 
-    # create_goal_pinecone(
-    #     goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
-    # )
+    create_goal_pinecone(
+        goal_id=goal_id,
+        is_recurring=goal_data["isRecurring"],
+        goal_description=goal_data["name"] + ": " + goal_data["description"],
+        user=str(user.phone_number),
+    )
+
 
 def modify_goal(goal_id: int, data=dict):
     """
@@ -84,9 +89,32 @@ def modify_goal(goal_id: int, data=dict):
     goal_instance.modify(data)
 
 
+def get_goal_info(goal_id: int, goal_type: int):
+    goal_instance = None
+    if goal_type:
+        goal_instance = RecurringGoal.objects.get(id=goal_id)
+    else:
+        goal_instance = OneTimeGoal.objects.get(id=goal_id)
+
+    # Construct goal info string
+    goal_info = "Here is some information about the requested goal:\n"
+    for field in goal_instance._meta.get_fields():
+        if field == "id" or field == "user":
+            continue
+        if field == "frequency":
+            goal_info += f"{field.name}: {frequency_to_str(getattr(goal_instance, field.name))}\n"
+        elif field == "importance":
+            goal_info += f"{field.name}: {importance_to_str(getattr(goal_instance, field.name))}\n"
+        else:
+            goal_info += f"{field.name}: {getattr(goal_instance, field.name)}\n"
+    print(goal_info)
+    return goal_info.strip()
+
+
 def create_goal_pinecone(
     goal_id: int, is_recurring: 0, goal_description: str, user: str
 ):
+    print(goal_id, is_recurring, goal_description, user)
     """
     Adds the goal to pinecone
 
@@ -105,15 +133,50 @@ def create_goal_pinecone(
     index = pinecone.Index(PINECONE_INDEX)
 
     # Set metadata
+    # We're entering the title and desc as the input
+    # as opposed to an "update"
     metadata = {
-        "user": user,
-        "is_recurring": is_recurring,
+        "type": "title_and_desc",
     }
-    vector_item = (goal_id, embeds[0], metadata)
+    vector_item = (f"{is_recurring}-{goal_id}", embeds[0], metadata)
 
     # Add goal to pinecone
-    index.upsert(vectors=[vector_item])
+    index.upsert(vectors=[vector_item], namespace=user)
 
     print(">>> Successfully added goal to Pinecone")
 
     return True
+
+
+def retrieve_goal_pinecone(query: str, user: str) -> Tuple[int, int]:
+    """
+    Retrieves a goal type + ID from Pinecone based on semantic similarity, filtered by user
+
+    Output: 1 if recurring, 0 if one-time, and the ID
+    """
+
+    co = cohere.Client(COHERE_API_KEY)
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
+    index = pinecone.Index(PINECONE_INDEX)
+
+    xq = co.embed(texts=[query], model=COHERE_EMBED_MODEL, truncate="LEFT").embeddings
+
+    res = index.query(
+        xq,
+        top_k=1,
+        include_metadata=False,
+        filter={"type": {"$eq": "title_and_desc"}},
+        namespace=user,
+    )
+    print(res)
+    return [int(item) for item in res["matches"][0]["id"].split("-")]
+
+
+# def update_goal_notes_pinecone(
+#     added_notes: str, goal_id: int, goal_type: int, user: str
+# ):
+#     co = cohere.Client(COHERE_API_KEY)
+#     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
+#     index = pinecone.Index(PINECONE_INDEX)
+
+#     xq = co.embed(texts=[added_notes], model=COHERE_EMBED_MODEL, truncate="LEFT").embeddings

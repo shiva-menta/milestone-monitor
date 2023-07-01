@@ -8,6 +8,7 @@ from utils.sms import send_sms
 import json
 import redis
 
+
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
     print(">>> CALLED chatbot_respond_async")
