@@ -10,7 +10,7 @@ from .interactions import create_goal
 from .chatbot import get_main_chatbot
 from .memory_utils import dict_to_memory, memory_to_dict, create_main_memory
 from .create_goal_chain import get_create_goal_chain
-from .msg_hist import (
+from .redis_user_data import (
     get_user_hist,
     update_user_convo_type,
     update_user_msg_memory,
@@ -26,17 +26,15 @@ from .goal_tools import (
 # Upon receiving a message from a user, this handles the message,
 # and responds (as well as taking other relevant actions)
 def chatbot_respond(query, user):
-    print(">>> CHATBOT IS RESPONDING")
+    print(">>> CHATBOT IS RESPONDING!!")
     # Get user data
     user_data = get_user_hist(user)
-    print(user_data)
 
     # Main conversation chain:
     # - The user is currently not in the middle of discussing adding a goal
     # - But this could trigger adding a goal
     if user_data["current_convo_type"] == "main":
         # Load memory
-        print(user_data["main_memory"])
         main_memory = dict_to_memory(user_data["main_memory"])
 
         if main_memory is None:
@@ -48,6 +46,8 @@ def chatbot_respond(query, user):
         # Get output from the chatbot
         # if we entered the create goal convo, it automatically
         # uses that output
+        print("Query:", query)
+        print("Memory:", main_memory)
         output = chatbot.run(input=query)
 
         # Save memory
@@ -64,12 +64,12 @@ def chatbot_respond(query, user):
 
         # Get the output from the goal creator chain
         current_full_output = chain.predict(input=query, today=datetime.now())
-
+        print(current_full_output)
         # Extract field entries and output
         current_field_entries = parse_field_entries(
-            current_full_output.split("END FIELD ENTRIES")[0].strip()
+            current_full_output.split("GoalDesigner: ")[0].strip()
         )
-        current_conversational_output = current_full_output.split("END FIELD ENTRIES")[
+        current_conversational_output = current_full_output.split("GoalDesigner: ")[
             1
         ].strip()
 
@@ -111,5 +111,7 @@ def chatbot_respond(query, user):
             output = f"{pretty_field_entries}\n\n{current_conversational_output}"
 
     # Send output as an SMS
+    # send_sms(user, output)
+    # print(output)
     send_sms(user, output)
     return HttpResponse("Text sent.")

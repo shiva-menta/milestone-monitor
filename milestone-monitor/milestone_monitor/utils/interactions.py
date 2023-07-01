@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_datetime, parse_time
 import cohere
 import pinecone
 
-from milestone_monitor.models import User, RecurringGoal, OneTimeGoal
+from milestone_monitor.models import User, RecurringGoal, OneTimeGoal, Importance, Frequency
 from .constants import str_to_frequency, str_to_importance
 from datetime import datetime, timedelta
 
@@ -20,7 +20,7 @@ COHERE_EMBED_MODEL = "embed-english-light-v2.0"
 def get_and_create_user(phone_number: str):
     user = None
     try:
-        user = User.objects.get(phone_number)
+        user = User.objects.get(phone_number=phone_number)
     except:
         user = User(phone_number=phone_number)
         user.save()
@@ -57,7 +57,7 @@ def create_goal(goal_data: dict, phone_number: str):
 
     title = goal_data["name"]
     importance = str_to_importance.get(
-        goal_data["estimatedImportance"], RecurringGoal.Importance.LOW
+        goal_data["estimatedImportance"], Importance.LOW
     )
     # Step 3: actually create goal
     g = None
@@ -67,10 +67,10 @@ def create_goal(goal_data: dict, phone_number: str):
             title=title,
             importance=importance,
             frequency=str_to_frequency.get(
-                goal_data["reminderFrequency"], RecurringGoal.Frequency.DAILY
+                goal_data["reminderFrequency"], Frequency.DAILY
             ),
             end_at=goal_data["dueDate"],
-            reminder_start_time=goal_data.get("reminderTime", datetime.now() + timedelta(minuutes=5)),
+            reminder_start_time=goal_data.get("reminderTime", datetime.now() + timedelta(minutes=5)),
         )
     else:
         g = OneTimeGoal(
@@ -80,9 +80,7 @@ def create_goal(goal_data: dict, phone_number: str):
             end_at=goal_data["dueDate"],
         )
     g.save()
-    return g
-
-    # print(">>> Successfully added goal to the postgres database!")
+    goal_id = g.id
 
     # create_goal_pinecone(
     #     goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
@@ -102,9 +100,14 @@ def modify_goal(goal_type: int, goal_id: int, data=dict):
     goal_instance.modify(data)
 
 
-def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
+def create_goal_pinecone(
+    goal_id: int, is_recurring: 0, goal_description: str, user: str
+):
     """
     Adds the goal to pinecone
+
+    goal_id: django id for the goal
+    goal_type:
     """
 
     # Retrieve embedding from description via cohere
@@ -117,8 +120,11 @@ def create_goal_pinecone(goal_id: str, goal_description: str, user: str):
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
     index = pinecone.Index(PINECONE_INDEX)
 
-    # Set user as metadata
-    metadata = {"user": user}
+    # Set metadata
+    metadata = {
+        "user": user,
+        "is_recurring": is_recurring,
+    }
     vector_item = (goal_id, embeds[0], metadata)
 
     # Add goal to pinecone

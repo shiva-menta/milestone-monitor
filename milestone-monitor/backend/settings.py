@@ -21,7 +21,7 @@ load_dotenv(override=True)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 twilio_account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-twilio_auth = os.environ.get("TWILIO_AUTH")
+twilio_auth = os.environ.get("TWILIO_AUTH_TOKEN")
 messaging_service_sid = os.environ.get("MESSAGING_SERVICE_SID")
 pg_user = os.environ.get("POSTGRES_USER")
 pg_pass = os.environ.get("POSTGRES_PASSWORD")
