@@ -7,10 +7,9 @@ RUN mkdir /code
 WORKDIR /code
 
 RUN pip install pipenv
-# COPY requirements.txt /code/
 COPY Pipfile Pipfile.lock ./
 RUN pip install pipenv && pipenv install --system
 
 COPY . ./
 
-CMD python manage.py runserver
+CMD python manage.py runserver & python -m celery -A backend beat -l info --logfile=celery.beat.log --detach & python -m celery -A backend worker -l info --logfile=celery.worker.log --detach --concurrency 4

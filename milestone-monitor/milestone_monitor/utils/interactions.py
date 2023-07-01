@@ -7,9 +7,10 @@ from django.utils.dateparse import parse_datetime, parse_time
 import cohere
 import pinecone
 
-from milestone_monitor.models import User, RecurringGoal, OneTimeGoal, Importance, Frequency
+from milestone_monitor.models import User, Goal, Importance, Frequency
 from .constants import str_to_frequency, str_to_importance
 from datetime import datetime, timedelta
+from django.forms.models import model_to_dict
 
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
@@ -60,43 +61,26 @@ def create_goal(goal_data: dict, phone_number: str):
         goal_data["estimatedImportance"], Importance.LOW
     )
     # Step 3: actually create goal
-    g = None
-    if goal_data["isRecurring"]:
-        g = RecurringGoal(
-            user=user,
-            title=title,
-            importance=importance,
-            frequency=str_to_frequency.get(
-                goal_data["reminderFrequency"], Frequency.DAILY
-            ),
-            end_at=goal_data["dueDate"],
-            reminder_start_time=goal_data.get("reminderTime", datetime.now() + timedelta(minutes=5)),
-        )
-    else:
-        g = OneTimeGoal(
-            user=user,
-            title=title,
-            importance=importance,
-            end_at=goal_data["dueDate"],
-        )
-    g.save()
+    g = Goal(
+        user=user,
+        title=title,
+        importance=importance,
+        end_at=goal_data['dueDate']
+    )
     goal_id = g.id
+    return goal_id
 
     # create_goal_pinecone(
     #     goal_id=goal_data["name"], goal_description=goal_data["description"], user=user
     # )
 
-def modify_goal(goal_type: int, goal_id: int, data=dict):
+def modify_goal(goal_id: int, data=dict):
     """
     Modifies current goal based on a dict of information. Models' modify functions
     check against its attribute keys. Functions can handle almost any combination of
     inputs, allowing for flexible modify queries.
     """
-    goal_instance = None
-    if goal_type:
-        goal_instance = RecurringGoal.objects.get(id=goal_id)
-    else:
-        goal_instance = OneTimeGoal.objects.get(id=goal_id)
+    goal_instance = Goal.objects.get(id=goal_id)
     goal_instance.modify(data)
 
 

@@ -12,7 +12,7 @@ from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
 from backend.decorators import validate_twilio_request
 
-from milestone_monitor.models import RecurringGoal, OneTimeGoal
+from milestone_monitor.models import Goal
 
 curr_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, curr_dir)
@@ -59,8 +59,6 @@ def receive_sms(request):
         request_sndr = request.POST.get("From", "")
 
         chatbot_respond_async.s(request_msg, request_sndr).apply_async()
-
-        # return HttpResponse("Goal created.")
         return HttpResponse("Queued chatbot respond job to Celery.")
 
 
@@ -99,20 +97,16 @@ def reset_user(request):
 
 
 def delete_goals_database(request):
-    RecurringGoal.objects.all().delete()
-    OneTimeGoal.objects.all().delete()
+    Goal.objects.all().delete()
     return HttpResponse("Goals deleted")
 
 
 # DEV: CHECK CURRENT GOAL DATABASE
+@csrf_exempt
 def print_goals_database(request):
-    recurring = RecurringGoal.objects.all()
-    one_time = OneTimeGoal.objects.all()
-
-    recurring_list = [model_to_dict(item) for item in recurring]
-    one_time_list = [model_to_dict(item) for item in one_time]
-
-    context = {"recurring": recurring_list, "one_time": one_time_list}
+    goals = Goal.objects.all()
+    goal_list = [model_to_dict(item) for item in goals]
+    context = {"goals": goal_list}
 
     return JsonResponse(context)
 

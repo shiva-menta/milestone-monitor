@@ -6,23 +6,15 @@ from .utils.sms import send_sms
 
 # send scheduled messages
 @shared_task(base=QueueOnce, name="send_recurring_reminder_message", once={'graceful': True})
-def send_recurring_reminder_message(number, task_title):
+def send_periodic_reminder(number, task_title):
     send_sms(
         "+" + str(number),
-        f"""
-        Hello! Just checking in about your goal: {task_title}.
-
-        Have you made any progress on this goal yet?
-        """,
+        f"Hello! Sending a reminder about completing your goal, {task_title}."
     )
 
-@shared_task(name="send_onetime_reminder_message")
-def send_onetime_reminder_message(number, task_title):
+@shared_task(name="send_final_task_message")
+def send_final_task_message(number, task_title):
     send_sms(
         "+" + str(number),
-        f"""
-        Hello! Just checking in about your goal: {task_title}.
-
-        Have you completed this goal yet?
-        """,
+        f"Hello! Your deadline for your goal, {task_title}, is now complete.",
     )
