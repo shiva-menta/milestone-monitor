@@ -28,7 +28,7 @@ def send_reminder_message(number, task_title):
 
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
-    print(">>> CALLED chatbot_respond_async")
+    print(">>> CALLED chatbot_respond_async!!!")
     print("sndr:", request_sndr)
     print("msg:", request_msg)
 

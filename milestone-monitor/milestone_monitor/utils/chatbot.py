@@ -7,6 +7,7 @@ from utils.goal_prompts import GOAL_DB_AGENT_TOOL_DESC, GOAL_CREATE_TOOL_DESC
 from utils.goal_tools import get_conversational_create_goal_tool
 from utils.llm import BASE_CHATBOT_LLM
 
+
 # MAIN_CHATBOT_PREFIX = """
 # You are a conversational bot that specializes in setting goals for users and giving them recommendations.
 # If you haven't already, you should make sure to let the user know that they should provide you with goals, habits,
@@ -47,14 +48,20 @@ def get_main_chatbot(
     #     )
     assert memory is not None
 
+    # HACK:
+    def _handle_error(error) -> str:
+        print(error)
+        return str(error)[:50]
+
     # Initialize agent
+    print("hellooooo")
     agent_chain = initialize_agent(
         agent="conversational-react-description",
         tools=generate_main_tools(user),
         llm=BASE_CHATBOT_LLM,
         verbose=DEBUG,
         memory=memory,
-        handle_parsing_errors="Check your output and make sure it conforms!",
+        handle_parsing_errors=_handle_error,
         # agent_kwargs={"prefix": MAIN_CHATBOT_PREFIX},
     )
     print("PROMPT TEMPLATE:", agent_chain.agent.llm_chain.prompt.template)

@@ -170,10 +170,11 @@ def get_conversational_create_goal_tool(user: str) -> callable:
         current_full_output = chain.predict(input=user_input, today=datetime.now())
 
         # Extract field entries and output
+        print(current_full_output)
         current_field_entries = parse_field_entries(
             current_full_output.split("END FIELD ENTRIES")[0].strip()
         )
-        current_conversational_output = current_full_output.split("END FIELD ENTRIES")[
+        current_conversational_output = current_full_output.split("GoalDesigner: ")[
             1
         ].strip()
 

@@ -27,7 +27,7 @@ from utils.goal_tools import (
 # Upon receiving a message from a user, this handles the message,
 # and responds (as well as taking other relevant actions)
 def chatbot_respond(query, user):
-    print(">>> CHATBOT IS RESPONDING")
+    print(">>> CHATBOT IS RESPONDING!!")
     # Get user data
     user_data = get_user_hist(user)
 

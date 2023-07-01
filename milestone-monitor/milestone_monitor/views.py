@@ -36,7 +36,7 @@ from utils.conversation_handler import chatbot_respond
 
 @csrf_exempt
 def receive_sms(request):
-    print(">>> Hit `receive_sms` endpoint")
+    print(">>> Hit `receive_sms` endpoint!!!")
     """
     Main texting endpoint for prod (receives an SMS message)
 

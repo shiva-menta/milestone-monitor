@@ -33,8 +33,6 @@ def create_goal(goal_data, user: str):
     user: string (of the form "+12345678901")
     """
 
-    # TODO: validate `status`
-
     # Create and save user (TODO: why are we doing this every time?)
     parsed_user_number = int(user[1:])  # assumes valid US format
     u = User(name="MM", phone_number=parsed_user_number)

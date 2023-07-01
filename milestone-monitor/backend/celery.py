@@ -13,5 +13,3 @@ app.conf.redbeat_redis_url = redis_url
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
 app.autodiscover_tasks()
-
-
