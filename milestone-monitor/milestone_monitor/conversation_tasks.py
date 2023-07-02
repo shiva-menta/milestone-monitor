@@ -8,12 +8,13 @@ from utils.sms import send_sms
 import json
 import redis
 
+from backend.settings import redis_url
+
+r = redis.Redis.from_url(redis_url)
 
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
     print(">>> CALLED chatbot_respond_async")
-    r = redis.Redis(host="localhost", port=6379, db=0)
-
     """
     Needs to do the following:
     1. Check if an existing conversation is in progress
@@ -30,11 +31,13 @@ def chatbot_respond_async(request_msg, request_sndr):
     # it will just immediately respond to the user
 
     # Bot is in the middle of responding, so we need to queue up the message (and message type)
-    r.srem("active-conversations", request_sndr)
+    r.srem("active-conversations", request_sndr) # testing – removing all objects from queue
+    
+    to_queue_msg = json.dumps({"type": "user", "content": request_msg})
+    r.lpush(chat_msg_queue, to_queue_msg)
+    
     if r.sismember("active-conversations", request_sndr):
         print(">>> Conversation is currently active, queueing")
-        to_queue_msg = json.dumps({"type": "user", "content": request_msg})
-        r.lpush(chat_msg_queue, to_queue_msg)
     else:
         # This should NEVER be reached if the bot is in the middle
         # of responding, so the code here should only be running on one
@@ -43,7 +46,6 @@ def chatbot_respond_async(request_msg, request_sndr):
         # No pending messages, so it is okay to respond immediately
         r.sadd("active-conversations", request_sndr)
         print(">>> Setting conversation as active")
-        chatbot_respond(request_msg, request_sndr)
 
         # By this point, it is possible that messages have been queued up while that above
         # worker/function was running, so we need to compile all of those messages
@@ -52,6 +54,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         # Note that this will run in a loop (since if we run the chatbot again,
         # the user could send more messages, so we need to respond again, and so on)
         queued_msgs_list = r.lrange(chat_msg_queue, 0, -1)
+        r.ltrim(chat_msg_queue, 1, 0)
         while queued_msgs_list:
             # Compile all messages and sort them
             user_msgs = []
@@ -64,8 +67,11 @@ def chatbot_respond_async(request_msg, request_sndr):
                     reminder_msgs.append(msg_obj["content"])
 
             # Send all reminder messages (and add them to the chatbot context)
-            for reminder in reminder_msgs:
-                send_sms(reminder)
+            compiled_reminder_msgs = "\n".join(reminder_msgs)
+            send_sms(
+                "+" + str(request_sndr),
+                f'By the way, you wanted me to remind you about these goals. {compiled_reminder_msgs}'
+            )
 
             # Queue chatbot with new messages and have it respond
             if user_msgs:
@@ -74,9 +80,9 @@ def chatbot_respond_async(request_msg, request_sndr):
 
             # Remove all messages from the queue and
             # collect any new msgs that have been sent in the meantime
-            queued_msgs_list = r.ltrim(chat_msg_queue, 1, 0)
             queued_msgs_list = r.lrange(chat_msg_queue, 0, -1)
-
+            r.ltrim(chat_msg_queue, 1, 0)
+            
         # By this point, there are no more messages left to be sent, so
         # we can remove the user from the list of active conversations
         r.srem("active-conversations", request_sndr)
