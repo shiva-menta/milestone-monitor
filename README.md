@@ -64,3 +64,11 @@ PINECONE_INDEX=`milestone-monitor`
 - `python3 manage.py migrate` (in the original terminal window)
 - `./runserver.sh` to run the server
 - If you would like to listen to the logs for the Celery workers, you can use `tail -f celery.worker.log` in a separate terminal
+
+## Development conventions
+
+**User IDs**
+
+- By default we should refer to a user using an _integer_ containing all of the digits in the phone number
+- For requests (with Twilio), the phone number will have a `+` and be in the form of a string, so we should immediately
+  convert this to an integer

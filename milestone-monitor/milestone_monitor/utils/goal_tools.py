@@ -222,9 +222,12 @@ def init_get_specific_goal_tool(user: str) -> callable:
         """
         A tool used to retrieve info about a specific goal.
         """
-        goal_type, goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
+        goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
 
-        return get_goal_info(goal_id, goal_type)
+        if not goal_id:
+            return "The user does not appear to have any goals related to this query."
+
+        return get_goal_info(goal_id)
 
     return get_specific_goal_tool
 
@@ -244,21 +247,26 @@ def init_modify_specific_goal_tool(user: str) -> callable:
             new_time = datetime.strptime(
                 modifications["reminder_start_time"], "%H:%M:%S"
             ).time()
+            print(datetime, timedelta)
             tomorrow = datetime.now() + timedelta(days=1)
             modifications["reminder_start_time"] = datetime.combine(tomorrow, new_time)
         if "frequency" in modifications.keys():
-            modifications["frequency"] = str_to_frequency(modifications["frequency"])
+            modifications["frequency"] = str_to_frequency.get(
+                modifications["frequency"], 0
+            )
         if "importance" in modifications.keys():
-            modifications["importance"] = str_to_importance(modifications["importance"])
+            modifications["importance"] = str_to_importance.get(
+                modifications["importance"], 0
+            )
 
         print(modifications)
 
         # Retrieve goal by query
-        goal_type, goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
+        goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
 
         # Update goal fields
         try:
-            modify_goal(goal_type, goal_id, modifications)
+            modify_goal(goal_id, modifications)
             return "Goal modified successfully!"
         except Exception:
             print(traceback.format_exc())

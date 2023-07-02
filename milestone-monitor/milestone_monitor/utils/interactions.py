@@ -9,7 +9,12 @@ import cohere
 import pinecone
 
 from milestone_monitor.models import User, Goal, Importance, Frequency
-from .constants import str_to_frequency, str_to_importance, frequency_to_str, importance_to_str
+from .constants import (
+    str_to_frequency,
+    str_to_importance,
+    frequency_to_str,
+    importance_to_str,
+)
 from datetime import datetime, timedelta
 from django.forms.models import model_to_dict
 
@@ -53,30 +58,46 @@ def create_goal(goal_data: dict, phone_number: str):
     # Step 1: get current user
     parsed_user_number = int(phone_number[1:])
     user = get_and_create_user(parsed_user_number)
+
     # Step 2: format common necessary data for goal
     # Assume that the naive datetime is in a certain timezone (e.g., New York)
     # ny_tz = pytz.timezone("America/New_York")
     # aware_dt = ny_tz.localize(naive_dt)
     # utc_dt = aware_dt.astimezone(pytz.UTC)
 
-    title = goal_data["name"]
-    importance = str_to_importance.get(goal_data["estimatedImportance"], Importance.LOW)
-    # Step 3: actually create goal
-    g = Goal(
-        user=user,
-        title=title,
-        importance=importance,
-        end_at=goal_data['dueDate']
-    )
-    goal_id = g.id
-    return goal_id
+    fields = {
+        "user": user,
+        "title": goal_data["name"],
+        "description": goal_data["description"],
+        "importance": str_to_importance.get(
+            goal_data["estimatedImportance"], Importance.LOW
+        ),
+        "end_at": goal_data["dueDate"],
+        "completed": False,
+    }
 
+    if goal_data["reminderFrequency"] and goal_data["reminderTime"]:
+        fields["reminder_start_time"] = datetime.strptime(
+            goal_data["reminderTime"], "%H:%M"
+        )
+        fields["reminder_frequency"] = str_to_frequency.get(
+            goal_data["reminderFrequency"], Frequency.DAILY
+        )
+
+    # Step 3: actually create and save goal
+    g = Goal(**fields)
+    g.save()
+
+    goal_id = g.id
+
+    # Step 4: add goal embeddings + info to pinecone
     create_goal_pinecone(
         goal_id=goal_id,
-        is_recurring=goal_data["isRecurring"],
         goal_description=goal_data["name"] + ": " + goal_data["description"],
         user=str(user.phone_number),
     )
+
+    return goal_id
 
 
 def modify_goal(goal_id: int, data=dict):
@@ -89,37 +110,44 @@ def modify_goal(goal_id: int, data=dict):
     goal_instance.modify(data)
 
 
-def get_goal_info(goal_id: int, goal_type: int):
-    goal_instance = None
-    if goal_type:
-        goal_instance = RecurringGoal.objects.get(id=goal_id)
-    else:
-        goal_instance = OneTimeGoal.objects.get(id=goal_id)
+def get_goal_info(goal_id: int):
+    goal_instance = Goal.objects.get(id=goal_id)
 
     # Construct goal info string
-    goal_info = "Here is some information about the requested goal:\n"
-    for field in goal_instance._meta.get_fields():
-        if field == "id" or field == "user":
-            continue
-        if field == "frequency":
-            goal_info += f"{field.name}: {frequency_to_str(getattr(goal_instance, field.name))}\n"
-        elif field == "importance":
-            goal_info += f"{field.name}: {importance_to_str(getattr(goal_instance, field.name))}\n"
-        else:
-            goal_info += f"{field.name}: {getattr(goal_instance, field.name)}\n"
-    print(goal_info)
-    return goal_info.strip()
+    goal_info = model_to_dict(goal_instance)
+    goal_info.pop("id", None)
+    goal_info.pop("name", None)
+    goal_info.pop("user", None)
+    goal_info.pop("reminder_task", None)
+    goal_info.pop("final_task_id", None)
+
+    if "reminder_start_time" in goal_info.keys():
+        goal_info["reminder_start_time"] = datetime.strftime(
+            goal_info["reminder_start_time"], "%m/%d/%Y, %H:%M:%S"
+        )
+    if "end_at" in goal_info.keys():
+        goal_info["end_at"] = datetime.strftime(
+            goal_info["end_at"], "%m/%d/%Y, %H:%M:%S"
+        )
+    if "importance" in goal_info.keys():
+        goal_info["importance"] = importance_to_str(goal_info["importance"])
+    if "reminder_frequency" in goal_info.keys():
+        goal_info["reminder_frequency"] = frequency_to_str(
+            goal_info["reminder_frequency"]
+        )
+
+    return "Goal info: " + str(goal_info)
 
 
-def create_goal_pinecone(
-    goal_id: int, is_recurring: 0, goal_description: str, user: str
-):
-    print(goal_id, is_recurring, goal_description, user)
+def create_goal_pinecone(goal_id: int, goal_description: str, user: str):
+    print(goal_id, goal_description, user)
+
     """
     Adds the goal to pinecone
 
-    goal_id: django id for the goal
-    goal_type:
+    goal_id: django id for the goal as an int
+    goal_description: string description of the goal
+    user: user's phone number as a string (no plus)
     """
 
     # Retrieve embedding from description via cohere
@@ -138,7 +166,9 @@ def create_goal_pinecone(
     metadata = {
         "type": "title_and_desc",
     }
-    vector_item = (f"{is_recurring}-{goal_id}", embeds[0], metadata)
+
+    # Pinecone expects a string ID
+    vector_item = (str(goal_id), embeds[0], metadata)
 
     # Add goal to pinecone
     index.upsert(vectors=[vector_item], namespace=user)
@@ -148,11 +178,11 @@ def create_goal_pinecone(
     return True
 
 
-def retrieve_goal_pinecone(query: str, user: str) -> Tuple[int, int]:
+def retrieve_goal_pinecone(query: str, user: str) -> int:
     """
-    Retrieves a goal type + ID from Pinecone based on semantic similarity, filtered by user
+    Retrieves a goal ID from Pinecone based on semantic similarity, filtered by user
 
-    Output: 1 if recurring, 0 if one-time, and the ID
+    Output: goal ID
     """
 
     co = cohere.Client(COHERE_API_KEY)
@@ -169,7 +199,7 @@ def retrieve_goal_pinecone(query: str, user: str) -> Tuple[int, int]:
         namespace=user,
     )
     print(res)
-    return [int(item) for item in res["matches"][0]["id"].split("-")]
+    return int(res["matches"][0]["id"])
 
 
 # def update_goal_notes_pinecone(

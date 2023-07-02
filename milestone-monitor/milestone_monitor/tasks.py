@@ -10,8 +10,9 @@ from backend.settings import redis_url
 
 r = redis.Redis.from_url(redis_url)
 
+
 # send scheduled messages
-@shared_task(base=QueueOnce, name="send_recurring_reminder_message", once={'graceful': True})
+@shared_task(base=QueueOnce, name="send_periodic_reminder", once={"graceful": True})
 def send_periodic_reminder(number, task_title):
     chat_msg_queue = f"pending-msgs-{number}"
     message = f"Hello! Sending a reminder about completing your goal, {task_title}."
@@ -28,6 +29,7 @@ def send_periodic_reminder(number, task_title):
             "+" + str(number),
             message
         )
+
 
 @shared_task(name="send_final_task_message")
 def send_final_task_message(number, task_title):
