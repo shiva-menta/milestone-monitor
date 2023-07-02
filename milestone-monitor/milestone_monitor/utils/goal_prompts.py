@@ -1,5 +1,6 @@
 from langchain.prompts.prompt import PromptTemplate
 
+
 GOAL_DB_AGENT_TOOL_DESC = "Useful for when you need to answer questions about the user's goals, habits, or tasks, particularly when comparing many or all of the goals, habits, or tasks to each other. The input should be a question comparing many different goals (such as \"What's the goal I've completed most recently?\") or a question regarding temporal, numerical, or statistical data related to goals."
 # GOAL_UPDATE_DESC = 'Useful for when the user has provided an update related to one of their existing goals, habits, or tasks. The user may indicate this by saying something similar to "I didn\'t get to finish [GOAL]", "I did [GOAL] today", or "I really want to start [GOAL] again". The input to this should be of the form "[GOAL]: [GOAL DESCRIPTION]", where [GOAL] is the name of the goal, and [GOAL UPDATE DESCRIPTION] is a detailed description of the update to goal, habit, or task.'
 
@@ -42,26 +43,6 @@ You MUST double check your query before executing it. If you get an error while 
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 If the question does not seem related to the database, just return "I don't know" as the answer.
 """
-
-# Template for the CREATE GOAL -> SQL chain
-# CREATE_GOAL_SQL_TMPL = """Given a goal name along with a description of that goal, create a syntactically correct SQL query to run in order to add that goal to the {table_name} table along with information regarding that goal.
-# You should only run a single CREATE query, and do not modify or delete any other entries in the table. Only add values for columns when you have information for those columns, and you should always add values for the name of the goal and the description of the goal.
-# Make sure to only use the column names that you can see in the schema description. Be careful not to add values for columns that do not exist.
-
-# Use the following format:
-# "Goal name here": "Goal description here"
-# SQLQuery: "SQL Query to run"
-# SQLResult: "Result of the SQLQuery"
-# Confirmation: "Confirmation of the success or failure of the query"
-# Only use the table listed below.
-# {table_info}
-# {input}
-# SQLQuery: """
-
-# create_goal_sql_prompt = PromptTemplate(
-#     input_variables=["table_name", "table_info", "input"],
-#     template=CREATE_GOAL_SQL_TMPL,
-# )
 
 
 # Template for the updated CREATE GOAL chain

@@ -1,5 +1,7 @@
 # Generates toolset and chatbot agent
 
+from datetime import datetime
+
 from langchain.agents import AgentExecutor, AgentType, Tool, initialize_agent
 from langchain.memory import ConversationBufferWindowMemory
 
@@ -15,11 +17,16 @@ from utils.goal_tools import (
 )
 from utils.llm import BASE_CHATBOT_LLM
 
-# MAIN_CHATBOT_PREFIX = """
-# You are a conversational bot that specializes in setting goals for users and giving them recommendations.
-# If you haven't already, you should make sure to let the user know that they should provide you with goals, habits,
-# or other tasks they wish to work on and can be general or specific as they want about what they're looking for.
-# """
+
+MILESTONE_MONITOR_PREFIX = """
+Milestone Monitor is a very friendly large language model designed to help users with pursuing their personal habits and goals. Note that the current time is {current_time}.
+
+Milestone Monitor is capable of assisting the user with a wide range of tasks, related to keeping track of personal goals and providing helpful advice. As a language model, Milestone Monitor is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
+
+Milestone Monitor is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of goal-related questions. Additionally, Milestone Monitor is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on any topic related to managing goals.
+
+Overall, Milestone Monitor is a powerful but friendly system that can help with a wide range of goal-related tasks and provide valuable insights and information on any topic for the purpose of forming personal goals. Whether you want to start a specific new goal or just want to have a conversation about getting better at your personal goals, Milestone Monitor is here to help.
+"""
 
 
 # Generates the tools for a specific user
@@ -58,7 +65,6 @@ def get_main_chatbot(
         return str(error)
 
     # Initialize agent
-    print()
     agent_chain = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
         tools=generate_main_tools(user),
@@ -66,7 +72,11 @@ def get_main_chatbot(
         verbose=DEBUG,
         memory=memory,
         handle_parsing_errors=_handle_error,
-        # agent_kwargs={"prefix": MAIN_CHATBOT_PREFIX},
+        agent_kwargs={
+            "system_message": MILESTONE_MONITOR_PREFIX.format(
+                current_time=datetime.strftime(datetime.now(), "%m/%d/%Y %H:%M")
+            )
+        },
     )
     print(
         "PROMPT TEMPLATE:",
