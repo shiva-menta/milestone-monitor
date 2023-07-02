@@ -3,8 +3,9 @@
 import redis
 import json
 from backend.settings import redis_url
+from typing import Tuple, List
 
-r = redis.Redis.from_url("redis://localhost:6379")
+r = redis.Redis.from_url(redis_url)
 
 
 # create message history object for a user if not there
@@ -50,7 +51,7 @@ def update_user_convo_type(number, convo_type):
 
 # update a user's message history ONLY
 def update_user_msg_memory(number, convo_type, messages):
-    if convo_type != "main" and convo_type != "create_goal":
+    if convo_type not in ["main", "create_goal"]:
         raise Exception("Invalid convo type.")
     if type(messages) is not list:
         raise Exception("Invalid type for messages.")
@@ -91,7 +92,7 @@ def pend_user_message(number, message):
 
 
 # pops all pending messages
-def pop_pending_messages(number) -> tuple[list[str], list[str]]:
+def pop_pending_messages(number) -> Tuple[List[str], List[str]]:
     chat_msg_queue = f"pending-msgs-{number}"
     queued_msgs_list = r.lrange(chat_msg_queue, 0, -1)
 
