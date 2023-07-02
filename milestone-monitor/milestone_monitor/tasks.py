@@ -4,13 +4,15 @@ from celery_once import QueueOnce
 
 from .utils.sms import send_sms
 
+
 # send scheduled messages
-@shared_task(base=QueueOnce, name="send_recurring_reminder_message", once={'graceful': True})
+@shared_task(base=QueueOnce, name="send_periodic_reminder", once={"graceful": True})
 def send_periodic_reminder(number, task_title):
     send_sms(
         "+" + str(number),
-        f"Hello! Sending a reminder about completing your goal, {task_title}."
+        f"Hello! Sending a reminder about completing your goal, {task_title}.",
     )
+
 
 @shared_task(name="send_final_task_message")
 def send_final_task_message(number, task_title):

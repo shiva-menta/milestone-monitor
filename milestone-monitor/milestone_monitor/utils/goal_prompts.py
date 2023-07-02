@@ -44,24 +44,24 @@ If the question does not seem related to the database, just return "I don't know
 """
 
 # Template for the CREATE GOAL -> SQL chain
-CREATE_GOAL_SQL_TMPL = """Given a goal name along with a description of that goal, create a syntactically correct SQL query to run in order to add that goal to the {table_name} table along with information regarding that goal.
-You should only run a single CREATE query, and do not modify or delete any other entries in the table. Only add values for columns when you have information for those columns, and you should always add values for the name of the goal and the description of the goal.
-Make sure to only use the column names that you can see in the schema description. Be careful not to add values for columns that do not exist.
+# CREATE_GOAL_SQL_TMPL = """Given a goal name along with a description of that goal, create a syntactically correct SQL query to run in order to add that goal to the {table_name} table along with information regarding that goal.
+# You should only run a single CREATE query, and do not modify or delete any other entries in the table. Only add values for columns when you have information for those columns, and you should always add values for the name of the goal and the description of the goal.
+# Make sure to only use the column names that you can see in the schema description. Be careful not to add values for columns that do not exist.
 
-Use the following format:
-"Goal name here": "Goal description here"
-SQLQuery: "SQL Query to run"
-SQLResult: "Result of the SQLQuery"
-Confirmation: "Confirmation of the success or failure of the query"
-Only use the table listed below.
-{table_info}
-{input}
-SQLQuery: """
+# Use the following format:
+# "Goal name here": "Goal description here"
+# SQLQuery: "SQL Query to run"
+# SQLResult: "Result of the SQLQuery"
+# Confirmation: "Confirmation of the success or failure of the query"
+# Only use the table listed below.
+# {table_info}
+# {input}
+# SQLQuery: """
 
-create_goal_sql_prompt = PromptTemplate(
-    input_variables=["table_name", "table_info", "input"],
-    template=CREATE_GOAL_SQL_TMPL,
-)
+# create_goal_sql_prompt = PromptTemplate(
+#     input_variables=["table_name", "table_info", "input"],
+#     template=CREATE_GOAL_SQL_TMPL,
+# )
 
 
 # Template for the updated CREATE GOAL chain
@@ -97,7 +97,9 @@ If the user indicates that they approve of the goal entries, then please ONLY ou
 
 You MUST confirm with the user at least one time before changing the STATUS field to SUCCESS. That is, the very first time you
 respond to the user, STATUS needs to be set to UNFINISHED, and you should ask them if the fields are okay.
-You MUST output END FIELD ENTRIES as in the example below when you are done with your fields.
+You MUST output `GoalDesigner: ` as the final field and nothing more.
+
+Please follow the exact template below. You MUST:
 
 FIELD ENTRIES
 Name: Name of the goal
@@ -108,14 +110,13 @@ Due Date Month: Month of the due date in MM form, if ONE-TIME.
 Due Date Day: Day of the due date in DD form, if ONE-TIME.
 Due Date Hour: Hour of the due date in HH form, if ONE-TIME.
 Due Date Minute: Minute of the due date in mm form, if ONE-TIME.
-Estimated Importance: Estimated importance of the goal; answer should be one of LOW, MEDIUM, HIGH. If unsure, ask the user.
-Estimated Duration Hours: Estimated number of hours the goal will take, in hours as an integer. If RECURRING, this should be the number of hours per one iteration of the goal. If unsure, ask the user.
-Goal Frequency: How often the user needs to work towards the goal, if the goal is RECURRING; answer should be one of DAILY, WEEKLY, or N/A. If unsure, ask the user.
-Reminder Frequency: How often the user would like to be reminded about this goal; answer should be one of HOURLY, DAILY, WEEKLY, BIWEEKLY, MONTHLY or N/A. If unsure, ask the user.
-Reminder Time: Time of the day the user would like to be reminded about this goal in HH:MM form. This is required, so if unsure, put the end of the day and ask the user.
+Estimated Importance: Estimated importance of the goal; answer should be one of LOW, MEDIUM, HIGH. If unsure, ask the user in the `GoalDesigner: ` field.
+Estimated Duration Hours: Estimated number of hours the goal will take, in hours as an integer. If RECURRING, this should be the number of hours per one iteration of the goal. If unsure, ask the user in the `GoalDesigner: ` field.
+Goal Frequency: How often the user needs to work towards the goal, if the goal is RECURRING; answer should be one of DAILY, WEEKLY, or N/A. If unsure, ask the user in the `GoalDesigner: ` field.
+Reminder Frequency: How often the user would like to be reminded about this goal; answer should be one of HOURLY, DAILY, WEEKLY, BIWEEKLY, MONTHLY or N/A. If unsure, ask the user in the `GoalDesigner: ` field.
+Reminder Time: Time of the day the user would like to be reminded about this goal in HH:MM form, military time (convert from AM/PM if necessary). This is required, so if unsure, put "23:59" temporarily and ask the user in the `GoalDesigner: ` field.
 STATUS: either UNFINISHED or SUCCESS
-GoalDesigner: your added comments/response here
-END FIELD ENTRIES
+GoalDesigner: Your added comments/response here. If the goal is not yet finished being constructed, you can ask the user for more details, but do not explicitly mention the SUCCESS field.
 
 {chat_history}
 Human: {input}

@@ -50,14 +50,6 @@ def generate_main_tools(user: str):
 def get_main_chatbot(
     user: str, memory: ConversationBufferWindowMemory, DEBUG=False
 ) -> AgentExecutor:
-    # Create new memory if doesn't exist yet
-    # if memory is None:
-    #     memory = ConversationBufferWindowMemory(
-    #         memory_key="chat_history",
-    #         input_key="input",
-    #         return_messages=True,
-    #         k=3
-    #     )
     assert memory is not None
 
     # HACK:
@@ -76,7 +68,11 @@ def get_main_chatbot(
         handle_parsing_errors=_handle_error,
         # agent_kwargs={"prefix": MAIN_CHATBOT_PREFIX},
     )
-    print("PROMPT TEMPLATE:", agent_chain.agent.llm_chain.prompt)
+    print(
+        "PROMPT TEMPLATE:",
+        agent_chain.agent.llm_chain.prompt.messages[0].prompt.template,
+    )
+    print(len(agent_chain.agent.llm_chain.prompt.messages))
 
     # Call the agent using agent.run(input="...")
     return agent_chain
