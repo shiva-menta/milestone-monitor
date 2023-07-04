@@ -6,22 +6,17 @@ name = "pypi"
 [packages]
 django = "*"
 twilio = "*"
-psycopg2 = "*"
 celery = "*"
 redis = "*"
 langchain = "*"
 openai = "*"
 python-dotenv = "*"
 black = "*"
-sentence-transformers = "*"
-pgvector = "*"
 django-celery-beat = "*"
 pinecone-client = "*"
 cohere = "*"
 celery-once = "*"
 pytz = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
-
-[requires]
-python_version = "3.10"

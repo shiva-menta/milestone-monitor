@@ -27,7 +27,7 @@ pg_user = os.environ.get("POSTGRES_USER")
 pg_pass = os.environ.get("POSTGRES_PASSWORD")
 pg_db = os.environ.get("POSTGRES_DB")
 redis_url = os.environ.get("REDIS_URL")
-ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
+# ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
 
 # Celery Config
 CELERY_BROKER_URL = redis_url
@@ -45,10 +45,13 @@ SECRET_KEY = "django-insecure-uacs21$(w==*xcus+gzpun+2k2lf1+zm9f@p0m)9rbcfz$p6ab
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    ngrok_forwarding,
+    # "localhost",
+    # "127.0.0.1",
+    "https://milestone-monitor.fly.dev"
+    # ngrok_forwarding,
 ]
+
+CSRF_TRUSTED_ORIGINS = ["https://milestone-monitor.fly.dev"]
 
 
 # Application definition

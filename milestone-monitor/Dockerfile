@@ -1,15 +1,20 @@
-# syntax=docker/dockerfile:1
+ARG PYTHON_VERSION=3.10-slim-buster
 
-FROM python:3.10-buster
+FROM python:${PYTHON_VERSION}
+
+ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-RUN mkdir /code
+
+RUN mkdir -p /code
 
 WORKDIR /code
 
-RUN pip install pipenv
-COPY Pipfile Pipfile.lock ./
-RUN pip install pipenv && pipenv install --system
+COPY requirements.txt /code/requirements.txt
+RUN pip install -r requirements.txt
+# COPY Pipfile Pipfile.lock /code/
+# RUN pipenv install --deploy --system
+COPY . /code
 
-COPY . ./
+EXPOSE 8000
 
-CMD python manage.py runserver & python -m celery -A backend beat -l info --logfile=celery.beat.log --detach & python -m celery -A backend worker -l info --logfile=celery.worker.log --detach --concurrency 4
+CMD ["gunicorn", "--bind", ":8000", "--workers", "2", "backend.wsgi"]
