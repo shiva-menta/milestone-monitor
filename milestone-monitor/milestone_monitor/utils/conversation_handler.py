@@ -1,9 +1,7 @@
-# Manages the actual flow of conversation for the chatbot, loading in user memory,
-# the right chains, and taking other actions as necessary
-
-from datetime import datetime
+# Manages the actual flow of conversation for the chatbot, including managing user memory and language chains.
 
 from django.http import HttpResponse
+from datetime import datetime
 
 from .sms import send_sms
 from .interactions import create_goal
@@ -14,7 +12,6 @@ from .redis_user_data import (
     get_user_hist,
     update_user_convo_type,
     update_user_msg_memory,
-    create_default_user_hist,
 )
 from .goal_tools import (
     parse_field_entries,
@@ -22,9 +19,6 @@ from .goal_tools import (
     prettify_field_entries,
 )
 
-
-# Upon receiving a message from a user, this handles the message,
-# and responds (as well as taking other relevant actions)
 def chatbot_respond(query, user):
     print(">>> CHATBOT IS RESPONDING!!")
     # Get user data

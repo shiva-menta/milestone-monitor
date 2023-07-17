@@ -1,5 +1,3 @@
-# Generates toolset and chatbot agent
-
 from langchain.agents import AgentExecutor, AgentType, Tool, initialize_agent
 from langchain.memory import ConversationBufferWindowMemory
 
@@ -21,8 +19,7 @@ from utils.llm import BASE_CHATBOT_LLM
 # or other tasks they wish to work on and can be general or specific as they want about what they're looking for.
 # """
 
-
-# Generates the tools for a specific user
+# Generates all tools needed by LangChain for a specific user.
 def generate_main_tools(user: str):
     tools = [
         Tool(
@@ -45,7 +42,6 @@ def generate_main_tools(user: str):
 
     return tools
 
-
 # Retrieves the main chatbot for a particular user (equips it with memory)
 def get_main_chatbot(
     user: str, memory: ConversationBufferWindowMemory, DEBUG=False
@@ -58,7 +54,6 @@ def get_main_chatbot(
         return str(error)
 
     # Initialize agent
-    print()
     agent_chain = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
         tools=generate_main_tools(user),

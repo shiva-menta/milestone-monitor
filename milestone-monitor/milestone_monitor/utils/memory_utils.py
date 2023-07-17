@@ -1,7 +1,7 @@
 from typing import List
 
 from langchain.memory import ConversationBufferWindowMemory
-from langchain.schema import messages_from_dict, messages_to_dict
+from langchain.schema import messages_from_dict, messages_to_dict, HumanMessage
 
 def dict_to_memory(memory_dict: List[dict], k=3) -> ConversationBufferWindowMemory:
     memory = ConversationBufferWindowMemory(
@@ -12,10 +12,12 @@ def dict_to_memory(memory_dict: List[dict], k=3) -> ConversationBufferWindowMemo
         return_messages=True, 
         k=k,
     )
-
     buffer = messages_from_dict(memory_dict)
-    for human, ai in zip(buffer[0::2], buffer[1::2]):
-        memory.save_context({"input": human.content}, {"output": ai.content})
+    for message in buffer:
+        if isinstance(message, HumanMessage):
+            memory.save_context({"output": message.content})
+        else:
+            memory.save_context({"input": message.content})
 
     return memory
 

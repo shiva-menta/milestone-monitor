@@ -20,6 +20,7 @@ pinecone-client = "*"
 cohere = "*"
 celery-once = "*"
 pytz = "*"
+fakeredis = "*"
 
 [dev-packages]
 

@@ -9,7 +9,7 @@ app = Celery("backend")
 app.conf.ONCE = {
   'backend': 'celery_once.backends.Redis',
   'settings': {
-    'url': redis_url+'1',
+    'url': redis_url+'1' if type(redis_url) == str else redis_url,
     'default_timeout': 60 * 60
   }
 }
