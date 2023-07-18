@@ -15,6 +15,7 @@ def create_default_user_hist(number):
         "current_convo_type": "main",
         "main_memory": [],
         "create_goal_memory": [],
+        "current_field_entries": {},
     }
 
     json_data = json.dumps(data)
@@ -64,6 +65,24 @@ def update_user_msg_memory(number, convo_type, messages):
     else:
         data["create_goal_memory"] = messages
 
+    json_data = json.dumps(data)
+    r.hset(str(key), "data", json_data)
+
+
+def update_current_goal_creation_field_entries(number, field_entries):
+    key = number
+    data = get_user_hist(key)
+
+    data["current_field_entries"] = field_entries
+    json_data = json.dumps(data)
+    r.hset(str(key), "data", json_data)
+
+
+def reset_current_goal_creation_field_entries(number):
+    key = number
+    data = get_user_hist(key)
+
+    data["current_field_entries"] = {}
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 

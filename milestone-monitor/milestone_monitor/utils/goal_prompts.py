@@ -3,16 +3,20 @@ from langchain.prompts.prompt import PromptTemplate
 
 GOAL_DB_AGENT_TOOL_DESC = "Useful for when you need to answer questions about the user's goals, habits, or tasks, particularly when comparing many or all of the goals, habits, or tasks to each other. The input should be a question comparing many different goals (such as \"What's the goal I've completed most recently?\") or a question regarding temporal, numerical, or statistical data related to goals."
 # GOAL_UPDATE_DESC = 'Useful for when the user has provided an update related to one of their existing goals, habits, or tasks. The user may indicate this by saying something similar to "I didn\'t get to finish [GOAL]", "I did [GOAL] today", or "I really want to start [GOAL] again". The input to this should be of the form "[GOAL]: [GOAL DESCRIPTION]", where [GOAL] is the name of the goal, and [GOAL UPDATE DESCRIPTION] is a detailed description of the update to goal, habit, or task.'
+# GOAL_CREATE_TOOL_DESC = """Useful for when the user has provided you with specific information on a new goal, habit, or task that they would like to start and eventually complete. The user may indicate this by saying something similar to \"I want to do [GOAL]\", \"I need to [GOAL]\", or \"I have [GOAL] due soon\". The input to this should be of the form \"[GOAL]: [GOAL DESCRIPTION]\", where [GOAL] is the name of the goal, and [GOAL DESCRIPTION] is a detailed description of the goal, habit, or task, including all possible information. Please do not include any information in the description other than what the user has specified. Do not use this tool if the user doesn't know what goal they want."""
 
-GOAL_CREATE_TOOL_DESC = """Useful for when the user has provided you with specific information on a new goal, habit, or task that they would like to start and eventually complete. 
-The user may indicate this by saying something similar to \"I want to do [GOAL]\", \"I need to [GOAL]\", or \"I have [GOAL] due soon\". 
-The input to this should be of the form \"[GOAL]: [GOAL DESCRIPTION]\", where [GOAL] is the name of the goal, and [GOAL DESCRIPTION] is a detailed description of the goal, habit, or task, including all possible information. 
-Please do not include any information in the description other than what the user has specified. Do not use this tool if the user doesn't know what goal they want."""
-GOAL_SPECIFIC_INFO_TOOL_DESC = """Useful for when the user asks about any information related to a specific goal, such as the reminder times, progress, or other specific information. You can guess the name based on what the user is talking about.
+GOAL_CREATE_TOOL_DESC_ALT = """This should be used when the user has provided you with specific information on a NEW goal, habit, or task that they would like to start and eventually complete. Calling this tool will start the creation process for a NEW goal, but will not save it. The user may indicate starting a goal creation session by saying something similar to \"I want to do [GOAL]\", \"I need to [GOAL]\", or \"I have [GOAL] due soon\". The input to this should be of the form \"[GOAL]: [GOAL DESCRIPTION]\", where [GOAL] is the name of the goal, and [GOAL DESCRIPTION] is a detailed description of the goal, habit, or task. Please do not include any information in the description other than what the user has specified. Do not use this tool if the user doesn't know what goal they want. If the user tries creating a different goal in the middle of working on one, you should tell them that they must finish working on the current goal first, and do not use this tool."""
+GOAL_CREATE_TOOL_EDIT_DESC_ALT = """This should be used when the user has provided an update to a NEW goal that is in the process of being created already. If you have previously called \"Start Create New Goal\", you should use this tool if the user asks to change something about the previous field entries, for example, \"I want to be reminded every week instead of every day\", or \"Could you change the description to XXX\"? This tool should only be used for goals that are in the process of being created, and not pre-existing goals the user is asking about."""
+GOAL_CREATE_FINISH_TOOL_DESC = """This tool should be used when the user is in the middle of creating a goal, and indicates that they are done with creating the goal. This tool will add the current field entries for the goal to a database. You should not use this tool unless you have just had a discussion about the various entries for a goal. Using this tool will add the current goal entries as a new goal to the database."""
+
+GOAL_SPECIFIC_INFO_TOOL_DESC = """Useful for when the user asks about any information related to a specific EXISTING goal, or a goal that has already been created and saved, such as the reminder times, progress, or other specific information. You can guess the name based on what the user is talking about.
 The user may indicate this by asking \"how is [GOAL] going?\" or \"when is the last time I did [GOAL]?\" or if the user asks about anything for [GOAL]. The input for this tool should be \"[GOAL NAME]\", where [GOAL NAME] is the name
-of the goal you think the user is talking about. When returning information, make sure to format it in an easy-to-read way."""
-GOAL_EDIT_TOOL_DESC = """Useful for when the user wants to modify specific information about a goal, or has an update about a specific goal. This could be referring to the completion of the goal, reminder times, priority level,
-or anything else that should be modified. The user may indicate this by asking something like \"I'm done with [GOAL NAME]\" or \"Can you turn off reminders for [GOAL NAME]\" The expected input for this tool should be \"[GOAL NAME]: [MODIFICATIONS DICTIONARY]\", where
+of the goal you think the user is talking about. When returning information, make sure to format it in an easy-to-read way.
+Remember, you should not use this tool for goals that are currently being created. For that, you should use the "Create Tool" goal."""
+GOAL_EDIT_TOOL_DESC = """Useful for when the user wants to modify specific information about an EXISTING goal, or has an update about a specific EXISTING goal. 
+Do not use this tool to edit a goal that is currently in the process of being created.
+This could be referring to the completion of the goal, reminder times, priority level, or anything else that should be modified.
+The user may indicate this by asking something like \"I'm done with [GOAL NAME]\" or \"Can you turn off reminders for [GOAL NAME]\" The expected input for this tool should be \"[GOAL NAME]: [MODIFICATIONS DICTIONARY]\", where
 [GOAL] is your best guess at the name of the goal, and [MODIFICATIONS DICTIONARY] is a Python dictionary with double quotes with the following optional fields:
 - `importance`: should be one of "LOW", "MEDIUM", or "HIGH"
 - `frequency`: should be one of "HOURLY", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"
@@ -22,7 +26,8 @@ or anything else that should be modified. The user may indicate this by asking s
 For example, if the user says they want to switch their reminder time for exercising to the evening, you might input
 \"Exercise more: {{"reminder_start_time": "18:30:00"}}\"
 
-Please only modify necessary fields for what the user is requesting or indicating.
+Please only modify necessary fields for what the user is requesting or indicating. Remember, please do not use this tool
+to modify a goal that is in the process of being created. For that, you should use the "Create Tool" goal.
 """
 
 # TODO: Add in column descriptions and list of all goal names available
@@ -80,7 +85,7 @@ You MUST confirm with the user at least one time before changing the STATUS fiel
 respond to the user, STATUS needs to be set to UNFINISHED, and you should ask them if the fields are okay.
 You MUST output `GoalDesigner: ` as the final field and nothing more.
 
-Please follow the exact template below. You MUST:
+Please follow the exact template below:
 
 FIELD ENTRIES
 Name: Name of the goal
@@ -97,7 +102,8 @@ Goal Frequency: How often the user needs to work towards the goal, if the goal i
 Reminder Frequency: How often the user would like to be reminded about this goal; answer should be one of HOURLY, DAILY, WEEKLY, BIWEEKLY, MONTHLY or N/A. If unsure, ask the user in the `GoalDesigner: ` field.
 Reminder Time: Time of the day the user would like to be reminded about this goal in HH:MM form, military time (convert from AM/PM if necessary). This is required, so if unsure, put "23:59" temporarily and ask the user in the `GoalDesigner: ` field.
 STATUS: either UNFINISHED or SUCCESS
-GoalDesigner: Your added comments/response here. If the goal is not yet finished being constructed, you can ask the user for more details, but do not explicitly mention the SUCCESS field.
+GoalDesigner: Your brief added comments/response here. If the goal is not yet finished being constructed, you can ask the user for more details, but do not explicitly mention the SUCCESS field.
+END FIELD ENTRIES
 
 {chat_history}
 Human: {input}

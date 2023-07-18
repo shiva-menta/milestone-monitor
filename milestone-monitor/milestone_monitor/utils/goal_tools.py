@@ -12,7 +12,7 @@ from langchain.agents import tool, create_sql_agent
 from langchain.memory import ConversationBufferWindowMemory
 
 from utils.constants import str_to_frequency, str_to_importance
-from utils.create_goal_chain import init_create_goal_chain
+from utils.create_goal_chain import get_create_goal_chain
 from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
 from utils.interactions import (
     create_goal,
@@ -21,8 +21,14 @@ from utils.interactions import (
     modify_goal,
 )
 from utils.llm import BASE_CHATBOT_LLM
-from utils.memory_utils import memory_to_dict
-from utils.redis_user_data import update_user_convo_type, update_user_msg_memory
+from utils.memory_utils import memory_to_dict, dict_to_memory
+from utils.redis_user_data import (
+    update_user_convo_type,
+    update_user_msg_memory,
+    get_user_hist,
+    update_current_goal_creation_field_entries,
+    reset_current_goal_creation_field_entries,
+)
 from utils.sms import send_sms
 
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
@@ -60,6 +66,8 @@ def parse_field_entries(field_entries: str):
 
     The output keys for the dict will NOT be in camel case yet (use `format_text_fields` for this)
     """
+    field_entries = field_entries.split("END FIELD ENTRIES")[0]
+
     return {
         field[0]: field[1]
         for field in [field.split(": ") for field in field_entries.split("\n")]
@@ -147,7 +155,6 @@ def prettify_field_entries(fields: dict):
 
 # Function that RETURNS a user-specific tool for creating a goal
 def init_conversational_create_goal_tool(user: str) -> callable:
-    @tool
     def conversational_create_goal_tool(query: str) -> str:
         """
         A tool which may prompt for additional user input to aid for the creation of a user goal.
@@ -207,6 +214,131 @@ def init_conversational_create_goal_tool(user: str) -> callable:
     return conversational_create_goal_tool
 
 
+def init_create_goal_tool_ALT(user: str) -> callable:
+    user_data = get_user_hist(user)
+
+    def create_goal_tool(query: str) -> str:
+        """
+        A tool that should be called whenever the bot needs to respond in a fashion related
+        to creating a goal.
+        """
+
+        user_input = query
+        current_field_entries = None
+
+        # If this tool is being run, we can optionally alert the user that we're working
+        # on adding a goal for them (so they know that the model is "thinking")
+        send_sms(user, "Okay, I'm working on designing a goal for you!")
+
+        # Load memory
+        create_memory = dict_to_memory(user_data["main_memory"])
+
+        # Load chain for goal creation conversation
+        chain = get_create_goal_chain(create_memory, DEBUG=True)
+
+        # Make prediction
+        current_full_output = chain.predict(input=user_input, today=datetime.now())
+
+        # Extract field entries and output
+        print(current_full_output)
+        current_field_entries = parse_field_entries(
+            current_full_output.split("END FIELD ENTRIES")[0].strip()
+        )
+        current_conversational_output = current_full_output.split("GoalDesigner: ")[
+            1
+        ].strip()
+
+        # Store field entries info locally
+        update_current_goal_creation_field_entries(user, current_field_entries)
+
+        # If the status is marked as success, then we shouldn't have to call
+        # the tool again until the next time the user wants to create a goal
+        if current_field_entries["STATUS"] == "SUCCESS":
+            # Parse current field entries here
+            # and add them to the database
+            formatted_text_fields = format_text_fields(current_field_entries)
+            create_goal(formatted_text_fields, user)
+            return "Goal successfully created!"
+
+        # This output will be used directly
+        pretty_field_entries = prettify_field_entries(current_field_entries)
+        return f"{pretty_field_entries}\n\n{current_conversational_output}"
+
+    return create_goal_tool
+
+
+def init_create_goal_modify_tool_ALT(user: str) -> callable:
+    user_data = get_user_hist(user)
+
+    def create_goal_modify_tool(query: str) -> str:
+        """
+        A tool that should be called whenever the bot needs to respond in a fashion related
+        to creating a goal.
+        """
+
+        user_input = query
+        current_field_entries = None
+
+        # If this tool is being run, we can optionally alert the user that we're working
+        # on adding a goal for them (so they know that the model is "thinking")
+        send_sms(user, "Got it, I'll change some things up then.")
+
+        # Load memory
+        create_memory = dict_to_memory(user_data["main_memory"])
+
+        # Load chain for goal creation conversation
+        chain = get_create_goal_chain(create_memory, DEBUG=True)
+
+        # Make prediction
+        current_full_output = chain.predict(input=user_input, today=datetime.now())
+
+        # Extract field entries and output
+        print(current_full_output)
+        current_field_entries = parse_field_entries(
+            current_full_output.split("END FIELD ENTRIES")[0].strip()
+        )
+        current_conversational_output = current_full_output.split("GoalDesigner: ")[
+            1
+        ].strip()
+
+        # Store field entries info locally
+        update_current_goal_creation_field_entries(user, current_field_entries)
+
+        # If the status is marked as success, then we shouldn't have to call
+        # the tool again until the next time the user wants to create a goal
+        if current_field_entries["STATUS"] == "SUCCESS":
+            # Parse current field entries here
+            # and add them to the database
+            formatted_text_fields = format_text_fields(current_field_entries)
+            create_goal(formatted_text_fields, user)
+            return "Goal successfully created!"
+
+        # This output will be used directly
+        pretty_field_entries = prettify_field_entries(current_field_entries)
+        return f"{pretty_field_entries}\n\n{current_conversational_output}"
+
+    return create_goal_modify_tool
+
+
+def init_create_goal_finish_tool_ALT(user: str) -> callable:
+    def create_goal_finish_tool(query: str) -> str:
+        # Need to get the most updated version of user data
+        user_data = get_user_hist(user)
+        field_entries = json.loads(user_data["current_field_entries"])
+
+        if field_entries:
+            formatted_text_fields = format_text_fields(field_entries)
+            create_goal(formatted_text_fields, user)
+
+            # Reset
+            reset_current_goal_creation_field_entries(user)
+            return "Goal successfully created!"
+        else:
+            return "Failed to upload goal, as the user was not currently in the process of creating a goal."
+
+    return create_goal_finish_tool
+
+
 ##
 # GOAL READING/EDITING
 # Available tools:
@@ -217,7 +349,6 @@ def init_conversational_create_goal_tool(user: str) -> callable:
 
 
 def init_get_specific_goal_tool(user: str) -> callable:
-    @tool
     def get_specific_goal_tool(goal_name_query: str) -> str:
         """
         A tool used to retrieve info about a specific goal.
@@ -233,7 +364,6 @@ def init_get_specific_goal_tool(user: str) -> callable:
 
 
 def init_modify_specific_goal_tool(user: str) -> callable:
-    @tool
     def modify_specific_goal_tool(query: str) -> str:
         """
         A tool used to edit information about a specific goal.

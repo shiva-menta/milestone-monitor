@@ -115,3 +115,36 @@ def chatbot_respond(query, user):
     # print(output)
     send_sms(user, output)
     return HttpResponse("Text sent.")
+
+
+# Upon rec
+def chatbot_respond_ALT(query, user):
+    user_data = get_user_hist(user)
+
+    main_memory = dict_to_memory(user_data["main_memory"])
+    is_creating_goal = len(user_data["current_field_entries"]) > 0
+
+    if main_memory is None:
+        main_memory = create_main_memory()
+
+    print(user_data)
+    print("IS CREATING GOAL:", is_creating_goal)
+
+    # Load chatbot with memory
+    chatbot = get_main_chatbot(user, main_memory, is_creating_goal, DEBUG=True)
+
+    # Get output from the chatbot
+    # if we entered the create goal convo, it automatically
+    # uses that output
+    print("Query:", query)
+    print("Memory:", main_memory)
+    output = chatbot.run(input=query)
+
+    # Save memory
+    update_user_msg_memory(user, "main", memory_to_dict(main_memory))
+
+    # Send output as an SMS
+    # send_sms(user, output)
+    # print(output)
+    send_sms(user, output)
+    return HttpResponse("Text sent.")

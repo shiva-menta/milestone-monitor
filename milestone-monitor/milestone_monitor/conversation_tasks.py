@@ -2,7 +2,7 @@ from celery import shared_task
 from django.http import HttpResponse, JsonResponse
 from celery_once import QueueOnce
 
-from utils.conversation_handler import chatbot_respond
+from utils.conversation_handler import chatbot_respond, chatbot_respond_ALT
 from utils.sms import send_sms
 
 import json
@@ -11,6 +11,7 @@ import redis
 from backend.settings import redis_url
 
 r = redis.Redis.from_url(redis_url)
+
 
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
@@ -31,11 +32,13 @@ def chatbot_respond_async(request_msg, request_sndr):
     # it will just immediately respond to the user
 
     # Bot is in the middle of responding, so we need to queue up the message (and message type)
-    r.srem("active-conversations", request_sndr) # testing – removing all objects from queue
-    
+    r.srem(
+        "active-conversations", request_sndr
+    )  # testing – removing all objects from queue
+
     to_queue_msg = json.dumps({"type": "user", "content": request_msg})
     r.lpush(chat_msg_queue, to_queue_msg)
-    
+
     if r.sismember("active-conversations", request_sndr):
         print(">>> Conversation is currently active, queueing")
     else:
@@ -70,19 +73,19 @@ def chatbot_respond_async(request_msg, request_sndr):
             compiled_reminder_msgs = "\n".join(reminder_msgs)
             send_sms(
                 "+" + str(request_sndr),
-                f'By the way, you wanted me to remind you about these goals. {compiled_reminder_msgs}'
+                f"By the way, you wanted me to remind you about these goals. {compiled_reminder_msgs}",
             )
 
             # Queue chatbot with new messages and have it respond
             if user_msgs:
                 compiled_user_msgs = "\n".join(user_msgs)
-                chatbot_respond(compiled_user_msgs, request_sndr)
+                chatbot_respond_ALT(compiled_user_msgs, request_sndr)
 
             # Remove all messages from the queue and
             # collect any new msgs that have been sent in the meantime
             queued_msgs_list = r.lrange(chat_msg_queue, 0, -1)
             r.ltrim(chat_msg_queue, 1, 0)
-            
+
         # By this point, there are no more messages left to be sent, so
         # we can remove the user from the list of active conversations
         r.srem("active-conversations", request_sndr)

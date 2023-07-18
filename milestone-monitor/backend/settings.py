@@ -45,10 +45,11 @@ SECRET_KEY = "django-insecure-uacs21$(w==*xcus+gzpun+2k2lf1+zm9f@p0m)9rbcfz$p6ab
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    # "localhost",
+    "localhost",
     # "127.0.0.1",
-    "https://milestone-monitor.fly.dev"
+    "https://milestone-monitor.fly.dev",
     # ngrok_forwarding,
+    "89ca-108-16-122-140.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = ["https://milestone-monitor.fly.dev"]
