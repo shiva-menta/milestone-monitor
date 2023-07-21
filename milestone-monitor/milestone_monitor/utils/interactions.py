@@ -139,6 +139,16 @@ def get_goal_info(goal_id: int):
     return "Goal info: " + str(goal_info)
 
 
+def get_all_goals() -> str:
+    response = "List of all goals (may be empty if there are no goals):"
+
+    all_goals = Goal.objects.all()
+    for goal in all_goals:
+        response += f"- Goal name: {goal.title}, goal id: {goal.id}\n"
+
+    return response
+
+
 def create_goal_pinecone(goal_id: int, goal_description: str, user: str):
     print(goal_id, goal_description, user)
 

@@ -19,6 +19,7 @@ from utils.interactions import (
     get_goal_info,
     retrieve_goal_pinecone,
     modify_goal,
+    get_all_goals,
 )
 from utils.llm import BASE_CHATBOT_LLM
 from utils.memory_utils import memory_to_dict, dict_to_memory
@@ -281,7 +282,9 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
 
         # If this tool is being run, we can optionally alert the user that we're working
         # on adding a goal for them (so they know that the model is "thinking")
-        send_sms(user, "Got it, I'll change some things up then.")
+        send_sms(
+            user, "Just a moment, I'm working on changing this new goal appropriately."
+        )
 
         # Load memory
         create_memory = dict_to_memory(user_data["main_memory"])
@@ -324,7 +327,8 @@ def init_create_goal_finish_tool_ALT(user: str) -> callable:
     def create_goal_finish_tool(query: str) -> str:
         # Need to get the most updated version of user data
         user_data = get_user_hist(user)
-        field_entries = json.loads(user_data["current_field_entries"])
+        field_entries = user_data["current_field_entries"]
+        send_sms(user, "Ok, I'm saving your goal!")
 
         if field_entries:
             formatted_text_fields = format_text_fields(field_entries)
@@ -361,6 +365,14 @@ def init_get_specific_goal_tool(user: str) -> callable:
         return get_goal_info(goal_id)
 
     return get_specific_goal_tool
+
+
+def init_get_all_goals_tool(user: str) -> callable:
+    # LangChain requires an input here even if we aren't using it
+    def get_all_goals_tool(query: str) -> str:
+        return get_all_goals()
+
+    return get_all_goals_tool
 
 
 def init_modify_specific_goal_tool(user: str) -> callable:

@@ -13,6 +13,7 @@ GOAL_SPECIFIC_INFO_TOOL_DESC = """Useful for when the user asks about any inform
 The user may indicate this by asking \"how is [GOAL] going?\" or \"when is the last time I did [GOAL]?\" or if the user asks about anything for [GOAL]. The input for this tool should be \"[GOAL NAME]\", where [GOAL NAME] is the name
 of the goal you think the user is talking about. When returning information, make sure to format it in an easy-to-read way.
 Remember, you should not use this tool for goals that are currently being created. For that, you should use the "Create Tool" goal."""
+GOAL_ALL_INFO_TOOL_DESC = """Retrieves a list of all goal names and their IDs. You should only use this if the user is asking about all of their goals."""
 GOAL_EDIT_TOOL_DESC = """Useful for when the user wants to modify specific information about an EXISTING goal, or has an update about a specific EXISTING goal. 
 Do not use this tool to edit a goal that is currently in the process of being created.
 This could be referring to the completion of the goal, reminder times, priority level, or anything else that should be modified.
