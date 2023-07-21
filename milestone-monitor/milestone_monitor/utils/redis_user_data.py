@@ -2,11 +2,12 @@
 
 import redis
 import json
+import sys
 from backend.settings import redis_url
+from backend.redis import get_redis_client
 from typing import Tuple, List
 
-r = redis.Redis.from_url(redis_url)
-
+r = get_redis_client()
 
 # create message history object for a user if not there
 def create_default_user_hist(number):

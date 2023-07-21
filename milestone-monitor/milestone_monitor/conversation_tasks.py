@@ -2,15 +2,19 @@ from celery import shared_task
 from django.http import HttpResponse, JsonResponse
 from celery_once import QueueOnce
 
+from backend.redis import get_redis_client
 from utils.conversation_handler import chatbot_respond
 from utils.sms import send_sms
+from utils.redis_user_data import (
+    get_user_hist,
+    update_user_convo_type,
+    update_user_msg_memory,
+    create_default_user_hist,
+)
 
 import json
-import redis
 
-from backend.settings import redis_url
-
-r = redis.Redis.from_url(redis_url)
+r = get_redis_client()
 
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
@@ -23,7 +27,6 @@ def chatbot_respond_async(request_msg, request_sndr):
     3. Otherwise, need to start a response from the chatbot using `chatbot_respond`
         which will handle the process of sending a text message back to the user
     """
-
     chat_msg_queue = f"pending-msgs-{request_sndr}"
 
     # Note that there will ONLY be pending messages if the bot is in the middle
@@ -31,13 +34,10 @@ def chatbot_respond_async(request_msg, request_sndr):
     # it will just immediately respond to the user
 
     # Bot is in the middle of responding, so we need to queue up the message (and message type)
-    r.srem("active-conversations", request_sndr) # testing – removing all objects from queue
-    
-    to_queue_msg = json.dumps({"type": "user", "content": request_msg})
-    r.lpush(chat_msg_queue, to_queue_msg)
-    
     if r.sismember("active-conversations", request_sndr):
         print(">>> Conversation is currently active, queueing")
+        to_queue_msg = json.dumps({"type": "user", "content": request_msg})
+        r.lpush(chat_msg_queue, to_queue_msg)
     else:
         # This should NEVER be reached if the bot is in the middle
         # of responding, so the code here should only be running on one
@@ -46,6 +46,8 @@ def chatbot_respond_async(request_msg, request_sndr):
         # No pending messages, so it is okay to respond immediately
         r.sadd("active-conversations", request_sndr)
         print(">>> Setting conversation as active")
+        chatbot_respond(request_msg, request_sndr)
+        user_data = get_user_hist(request_sndr)
 
         # By this point, it is possible that messages have been queued up while that above
         # worker/function was running, so we need to compile all of those messages
@@ -67,14 +69,15 @@ def chatbot_respond_async(request_msg, request_sndr):
                     reminder_msgs.append(msg_obj["content"])
 
             # Send all reminder messages (and add them to the chatbot context)
-            compiled_reminder_msgs = "\n".join(reminder_msgs)
-            send_sms(
-                "+" + str(request_sndr),
-                f'By the way, you wanted me to remind you about these goals. {compiled_reminder_msgs}'
-            )
+            if reminder_msgs:
+                compiled_reminder_msgs = "\n".join(reminder_msgs)
+                send_sms(
+                    "+" + str(request_sndr),
+                    f'By the way, you wanted me to remind you about these goals. {compiled_reminder_msgs}'
+                )
 
             # Queue chatbot with new messages and have it respond
-            if user_msgs:
+            if user_msgs and user_data['current_convo_type'] != "create_goal":
                 compiled_user_msgs = "\n".join(user_msgs)
                 chatbot_respond(compiled_user_msgs, request_sndr)
 

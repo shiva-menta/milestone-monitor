@@ -61,10 +61,6 @@ def create_goal(goal_data: dict, phone_number: str):
 
     # Step 2: format common necessary data for goal
     # Assume that the naive datetime is in a certain timezone (e.g., New York)
-    # ny_tz = pytz.timezone("America/New_York")
-    # aware_dt = ny_tz.localize(naive_dt)
-    # utc_dt = aware_dt.astimezone(pytz.UTC)
-
     fields = {
         "user": user,
         "title": goal_data["name"],
@@ -76,6 +72,12 @@ def create_goal(goal_data: dict, phone_number: str):
         "completed": False,
     }
 
+    if "dueDate" in goal_data:
+        end_at = parse_datetime(goal_data["dueDate"])
+        ny_tz = pytz.timezone("America/New_York")
+        aware_dt = ny_tz.localize(end_at)
+        utc_dt = aware_dt.astimezone(pytz.UTC)
+        fields["end_at"] = utc_dt
     if goal_data["reminderFrequency"] and goal_data["reminderTime"]:
         fields["reminder_start_time"] = datetime.strptime(
             goal_data["reminderTime"], "%H:%M"

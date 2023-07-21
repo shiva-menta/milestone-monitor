@@ -18,5 +18,6 @@ cohere = "*"
 celery-once = "*"
 pytz = "*"
 psycopg2-binary = "*"
+fakeredis = "*"
 
 [dev-packages]

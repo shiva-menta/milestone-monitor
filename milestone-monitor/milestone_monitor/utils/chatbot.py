@@ -28,8 +28,7 @@ Milestone Monitor is constantly learning and improving, and its capabilities are
 Overall, Milestone Monitor is a powerful but friendly system that can help with a wide range of goal-related tasks and provide valuable insights and information on any topic for the purpose of forming personal goals. Whether you want to start a specific new goal or just want to have a conversation about getting better at your personal goals, Milestone Monitor is here to help.
 """
 
-
-# Generates the tools for a specific user
+# Generates all tools needed by LangChain for a specific user.
 def generate_main_tools(user: str):
     tools = [
         Tool(
@@ -51,7 +50,6 @@ def generate_main_tools(user: str):
     ]
 
     return tools
-
 
 # Retrieves the main chatbot for a particular user (equips it with memory)
 def get_main_chatbot(

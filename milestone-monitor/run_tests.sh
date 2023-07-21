@@ -1,0 +1,1 @@
+python manage.py test milestone_monitor.tests --settings=backend.test_settings
