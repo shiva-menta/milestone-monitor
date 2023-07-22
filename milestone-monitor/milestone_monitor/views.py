@@ -1,10 +1,7 @@
 import os
 import sys
 import json
-from datetime import datetime
 from twilio.request_validator import RequestValidator
-
-import logging
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
@@ -20,20 +17,12 @@ sys.path.insert(0, curr_dir)
 from conversation_tasks import chatbot_respond_async
 
 from utils.sms import send_sms
-from utils.interactions import create_goal
-from utils.chatbot import get_main_chatbot
-from utils.memory_utils import dict_to_memory, memory_to_dict, create_main_memory
-from utils.create_goal_chain import get_create_goal_chain
 from utils.redis_user_data import (
-    get_user_hist,
     update_user_convo_type,
-    update_user_msg_memory,
     create_default_user_hist,
     set_conversation_inactive,
     pop_pending_messages,
 )
-from utils.goal_tools import parse_field_entries, format_text_fields
-from utils.conversation_handler import chatbot_respond
 
 
 @csrf_exempt

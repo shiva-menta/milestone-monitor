@@ -9,6 +9,7 @@ from typing import Tuple, List
 
 r = get_redis_client()
 
+
 # create message history object for a user if not there
 def create_default_user_hist(number):
     key = number
@@ -51,25 +52,39 @@ def update_user_convo_type(number, convo_type):
     r.hset(str(key), "data", json_data)
 
 
-# update a user's message history ONLY (keeping max window of messages)
-def update_user_msg_memory(number, convo_type, messages):
+# Saves a user's message history with a new memory dict, keeping the max window of messages
+# This should be used when providing a new memory dict to REPLACE the current memory,
+# like with LangChain's API
+def save_user_msg_memory(number, convo_type, memory_list):
+    print(">>> Updating user msg memory (saving with new)")
     if convo_type not in ["main", "create_goal"]:
         raise Exception("Invalid convo type.")
-    if type(messages) is not list:
-        raise Exception("Invalid type for messages.")
+    if type(memory_list) is not list:
+        raise Exception("Invalid type for mem.")
 
     key = number
     data = get_user_hist(key)
+    data["main_memory"] = memory_list[-REDIS_QUEUE_LENGTH:]
+    print(data["main_memory"])
 
-    print(data)
+    json_data = json.dumps(data)
+    r.hset(str(key), "data", json_data)
 
-    if convo_type == "main":
-        data["main_memory"].extend(messages)
-        data["main_memory"] = data["main_memory"][-REDIS_QUEUE_LENGTH:] 
-    else:
-        data["create_goal_memory"] = messages
 
-    print(data)
+# Extends the current message history by ADDING messages to it
+# This should be used
+def extend_user_msg_memory(number, convo_type, memory_list):
+    print(">>> Updating user msg memory (adding extra messages)")
+    if convo_type not in ["main", "create_goal"]:
+        raise Exception("Invalid convo type.")
+    if type(memory_list) is not list:
+        raise Exception("Invalid type for mem.")
+
+    key = number
+    data = get_user_hist(key)
+    data["main_memory"].extend(memory_list)
+    data["main_memory"] = data["main_memory"][-REDIS_QUEUE_LENGTH:]
+    print(data["main_memory"])
 
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
@@ -91,6 +106,7 @@ def reset_current_goal_creation_field_entries(number):
     data["current_field_entries"] = {}
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
+
 
 # checks whether or not the chatbot is currently responding (so we shouldn't)
 # start another chain

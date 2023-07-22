@@ -6,6 +6,8 @@ from langchain.tools import Tool
 from langchain.agents import AgentExecutor, AgentType, initialize_agent
 from langchain.memory import ConversationBufferWindowMemory
 
+from textwrap import dedent
+
 from utils.goal_prompts import (
     GOAL_SPECIFIC_INFO_TOOL_DESC,
     GOAL_ALL_INFO_TOOL_DESC,
@@ -36,7 +38,7 @@ If the user indicates that they are interested in starting a goal, accomplishing
 
 Overall, Milestone Monitor is a powerful but friendly system that can help with a wide range of goal-related tasks and provide valuable insights and information on any topic for the purpose of forming personal goals. Whether you want to start a specific new goal or just want to have a conversation about getting better at your personal goals, Milestone Monitor is here to help.
 
-{extra_note}
+{extra_notes}
 
 Note that the current time is {current_time}.
 """
@@ -87,6 +89,7 @@ def get_main_chatbot(
     user: str,
     memory: ConversationBufferWindowMemory,
     is_creating_goal: bool,
+    is_responding_to_queue=False,
     DEBUG=False,
 ) -> AgentExecutor:
     assert memory is not None
@@ -97,11 +100,24 @@ def get_main_chatbot(
         return str(error)
 
     # If the user is in the middle of
-    extra_note = ""
+    create_goal_note = ""
     if is_creating_goal:
-        extra_note = "IMPORTANT: Please note, the user is currently in the process of creating a goal, which has not yet been added to the database. If the user expresses approval at the previous iteration of the goal data, you MUST use the appropriate tool to finish the process of goal creation and add it to the database."
+        create_goal_note = "IMPORTANT: Please note, the user is currently in the process of creating a goal, which has not yet been added to the database. If the user expresses approval at the previous iteration of the goal data, you MUST use the appropriate tool to finish the process of goal creation and add it to the database. You should NOT create any other new goals during this process."
+
+    queue_note = ""
+    if is_responding_to_queue:
+        queue_note = dedent(
+            """\nIMPORTANT: Please note that the last message from the user was sent BEFORE the final response(s)
+                from Milestone Monitor that you can see here. The last response you can see here from Milestone Monitor was being
+                written while the user was also texting the chatbot. In other words, the user is responding to the second-to-last
+                message Milestone Monitor sent, and could not have seen the final message Milestone Monitor sent here, so please
+                respond appropriately. For example, if Milestone Monitor just responded with information for a new goal, and the
+                user appears to have responded \"ok\", the user is not responding to that new information, but to an older chatbot message.
+                Please DO NOT repeat any prior actions you just took, such as creating a new goal."""
+        )
 
     # Initialize agent
+    # TODO: need datetime to provide the actual local time
     agent_chain = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
         tools=generate_main_tools(user),
@@ -112,7 +128,7 @@ def get_main_chatbot(
         agent_kwargs={
             "system_message": MILESTONE_MONITOR_PREFIX.format(
                 current_time=datetime.strftime(datetime.now(), "%m/%d/%Y %H:%M"),
-                extra_note=extra_note,
+                extra_notes=create_goal_note + queue_note,
             )
         },
     )

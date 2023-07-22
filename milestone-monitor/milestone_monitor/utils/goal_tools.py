@@ -25,7 +25,7 @@ from utils.llm import BASE_CHATBOT_LLM
 from utils.memory_utils import memory_to_dict, dict_to_memory
 from utils.redis_user_data import (
     update_user_convo_type,
-    update_user_msg_memory,
+    extend_user_msg_memory,
     get_user_hist,
     update_current_goal_creation_field_entries,
     reset_current_goal_creation_field_entries,
@@ -134,7 +134,10 @@ def prettify_field_entries(fields: dict):
         pretty_output += (
             f'📆 Due date: {data["dueDate"].strftime("%m/%d/%Y, %H:%M:%S")}' + "\n"
         )
-    pretty_output += f'⭐️ Priority level: {data["estimatedImportance"].lower()}' + "\n"
+    if data["estimatedImportance"]:
+        pretty_output += (
+            f'⭐️ Priority level: {data["estimatedImportance"].lower()}' + "\n"
+        )
     if data["estimatedDurationHours"]:
         pretty_output += (
             f'⏳ Estimated duration: {data["estimatedDurationHours"]} hours' + "\n"
@@ -155,64 +158,64 @@ def prettify_field_entries(fields: dict):
 
 
 # Function that RETURNS a user-specific tool for creating a goal
-def init_conversational_create_goal_tool(user: str) -> callable:
-    def conversational_create_goal_tool(query: str) -> str:
-        """
-        A tool which may prompt for additional user input to aid for the creation of a user goal.
-        Upon running this tool, a new conversation will be started with a separate model, and info
-        will be updated accordingly. The output of this model is simply the first response from the
-        chain. Memory will be saved, and the conversation type will be updated.
-        """
+# def init_conversational_create_goal_tool(user: str) -> callable:
+#     def conversational_create_goal_tool(query: str) -> str:
+#         """
+#         A tool which may prompt for additional user input to aid for the creation of a user goal.
+#         Upon running this tool, a new conversation will be started with a separate model, and info
+#         will be updated accordingly. The output of this model is simply the first response from the
+#         chain. Memory will be saved, and the conversation type will be updated.
+#         """
 
-        user_input = query
-        current_field_entries = None
+#         user_input = query
+#         current_field_entries = None
 
-        # If this tool is being run, we can optionally alert the user that we're working
-        # on adding a goal for them (so they know that the model is "thinking")
-        send_sms(user, "Okay, I'm working on designing a goal for you!")
+#         # If this tool is being run, we can optionally alert the user that we're working
+#         # on adding a goal for them (so they know that the model is "thinking")
+#         send_sms(user, "Okay, I'm working on designing a goal for you!")
 
-        # Set current convo type to create goal
-        update_user_convo_type(user, "create_goal")
+#         # Set current convo type to create goal
+#         update_user_convo_type(user, "create_goal")
 
-        # Create chain
-        chain, memory = init_create_goal_chain(DEBUG=True)
+#         # Create chain
+#         chain, memory = init_create_goal_chain(DEBUG=True)
 
-        # Make prediction
-        current_full_output = chain.predict(input=user_input, today=datetime.now())
+#         # Make prediction
+#         current_full_output = chain.predict(input=user_input, today=datetime.now())
 
-        # Extract field entries and output
-        print(current_full_output)
-        current_field_entries = parse_field_entries(
-            current_full_output.split("END FIELD ENTRIES")[0].strip()
-        )
-        current_conversational_output = current_full_output.split("GoalDesigner: ")[
-            1
-        ].strip()
+#         # Extract field entries and output
+#         print(current_full_output)
+#         current_field_entries = parse_field_entries(
+#             current_full_output.split("END FIELD ENTRIES")[0].strip()
+#         )
+#         current_conversational_output = current_full_output.split("GoalDesigner: ")[
+#             1
+#         ].strip()
 
-        # Save memory of this conversation
-        update_user_msg_memory(user, "create_goal", memory_to_dict(memory))
+#         # Save memory of this conversation
+#         extend_user_msg_memory(user, "create_goal", memory_to_dict(memory))
 
-        # This shouldn't happen on the first round (because the model was "told not to")
-        # but just in case
-        if current_field_entries["STATUS"] == "SUCCESS":
-            assert False
-            update_user_convo_type(user, "main")
+#         # This shouldn't happen on the first round (because the model was "told not to")
+#         # but just in case
+#         if current_field_entries["STATUS"] == "SUCCESS":
+#             assert False
+#             update_user_convo_type(user, "main")
 
-            # Parse current field entries here
-            # and add them to the database
-            fields_json = text_fields_to_json(current_field_entries)
+#             # Parse current field entries here
+#             # and add them to the database
+#             fields_json = text_fields_to_json(current_field_entries)
 
-            # TODO: add embedding using pgvector
-            goal_name_embedding = create_embedding(current_field_entries["name"])
-            create_goal(fields_json)
+#             # TODO: add embedding using pgvector
+#             goal_name_embedding = create_embedding(current_field_entries["name"])
+#             create_goal(fields_json)
 
-            return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
+#             return f"The goal data being added is as follows:\n{current_field_entries}\nGoal added successfully!"
 
-        # This output will be used directly
-        pretty_field_entries = prettify_field_entries(current_field_entries)
-        return f"{pretty_field_entries}\n\n{current_conversational_output}"
+#         # This output will be used directly
+#         pretty_field_entries = prettify_field_entries(current_field_entries)
+#         return f"{pretty_field_entries}\n\n{current_conversational_output}"
 
-    return conversational_create_goal_tool
+#     return conversational_create_goal_tool
 
 
 def init_create_goal_tool_ALT(user: str) -> callable:
@@ -230,6 +233,20 @@ def init_create_goal_tool_ALT(user: str) -> callable:
         # If this tool is being run, we can optionally alert the user that we're working
         # on adding a goal for them (so they know that the model is "thinking")
         send_sms(user, "Okay, I'm working on designing a goal for you!")
+        extend_user_msg_memory(
+            user,
+            "main",
+            [
+                {
+                    "type": "ai",
+                    "data": {
+                        "content": "Okay, I'm working on designing a goal for you!",
+                        "additional_kwargs": {},
+                        "example": False,
+                    },
+                }
+            ],
+        )
 
         # Load memory
         create_memory = dict_to_memory(user_data["main_memory"])
@@ -285,6 +302,20 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
         send_sms(
             user, "Just a moment, I'm working on changing this new goal appropriately."
         )
+        extend_user_msg_memory(
+            user,
+            "main",
+            [
+                {
+                    "type": "ai",
+                    "data": {
+                        "content": "Just a moment, I'm working on changing this new goal appropriately.",
+                        "additional_kwargs": {},
+                        "example": False,
+                    },
+                }
+            ],
+        )
 
         # Load memory
         create_memory = dict_to_memory(user_data["main_memory"])
@@ -328,6 +359,20 @@ def init_create_goal_finish_tool_ALT(user: str) -> callable:
         user_data = get_user_hist(user)
         field_entries = user_data["current_field_entries"]
         send_sms(user, "Ok, I'm saving your goal!")
+        extend_user_msg_memory(
+            user,
+            "main",
+            [
+                {
+                    "type": "ai",
+                    "data": {
+                        "content": "Ok, I'm saving your goal!",
+                        "additional_kwargs": {},
+                        "example": False,
+                    },
+                }
+            ],
+        )
 
         if field_entries:
             formatted_text_fields = format_text_fields(field_entries)

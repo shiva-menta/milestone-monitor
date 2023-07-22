@@ -8,12 +8,14 @@ from utils.sms import send_sms
 from utils.redis_user_data import (
     get_user_hist,
     update_user_convo_type,
-    update_user_msg_memory,
+    extend_user_msg_memory,
     create_default_user_hist,
 )
 
 import json
+
 r = get_redis_client()
+
 
 @shared_task
 def chatbot_respond_async(request_msg, request_sndr):
@@ -53,9 +55,10 @@ def chatbot_respond_async(request_msg, request_sndr):
         pipe.lrange(chat_msg_queue, 0, -1)
         pipe.ltrim(chat_msg_queue, 1, 0)
         queued_msgs_list, _ = pipe.execute()
-        
+
         # Handle incoming messages
         while queued_msgs_list:
+            print(">>> Handling queued messages...")
             # Sort messages into user messages and reminder messages
             user_msgs = []
             reminder_msgs = []
@@ -69,23 +72,34 @@ def chatbot_respond_async(request_msg, request_sndr):
             # Send all reminder messages (and add them to the chatbot context)
             if reminder_msgs:
                 compiled_reminder_msgs = "\n".join(reminder_msgs)
-                update_user_msg_memory(request_sndr, "main", [{
-                    'type': 'ai',
-                    'data': {
-                        'content': request_sndr,
-                        'additional_kwargs': {},
-                        'example': False
-                    }
-                }])
+                extend_user_msg_memory(
+                    request_sndr,
+                    "main",
+                    [
+                        {
+                            "type": "ai",
+                            "data": {
+                                "content": compiled_reminder_msgs,
+                                "additional_kwargs": {},
+                                "example": False,
+                            },
+                        }
+                    ],
+                )
                 send_sms(
                     "+" + str(request_sndr),
                     f"By the way, you wanted me to remind you about these goals. \n\n{compiled_reminder_msgs}",
                 )
 
             # Queue chatbot with new messages and have it respond (this will auto handle adding to context)
+            # We should also indicate to the chatbot that the last message WE sent was sent AFTER all of these
+            # messages we are responding to. In other words, the user is responding to the second-to-last
+            # message the chatbot sent, and not the very last one (which was being written as the user was sending messages).
             if user_msgs:
                 compiled_user_msgs = "\n".join(user_msgs)
-                chatbot_respond_ALT(compiled_user_msgs, request_sndr)
+                chatbot_respond_ALT(
+                    compiled_user_msgs, request_sndr, is_responding_to_queue=True
+                )
 
             # Get any new messages in the queue
             pipe = r.pipeline()
