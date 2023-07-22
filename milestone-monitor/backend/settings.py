@@ -30,6 +30,9 @@ pg_db = os.environ.get("POSTGRES_DB")
 redis_url = os.environ.get("REDIS_URL")
 ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
 
+# Redis Config
+REDIS_QUEUE_LENGTH = 10
+
 # Celery Config
 CELERY_BROKER_URL = redis_url
 CELERY_RESULT_BACKEND = redis_url

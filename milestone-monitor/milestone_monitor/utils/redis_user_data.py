@@ -3,7 +3,7 @@
 import redis
 import json
 import sys
-from backend.settings import redis_url
+from backend.settings import REDIS_QUEUE_LENGTH
 from backend.redis import get_redis_client
 from typing import Tuple, List
 
@@ -86,45 +86,3 @@ def reset_current_goal_creation_field_entries(number):
     data["current_field_entries"] = {}
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
-
-
-# checks whether or not the chatbot is currently responding (so we shouldn't)
-# start another chain
-def check_active_conversation(number):
-    return r.sismember("active-conversations", number)
-
-
-# sets a user's conversation as "active" (chatbot is responding)
-def set_conversation_active(number):
-    return r.sadd("active-conversations", number)
-
-
-# sets a user's conversation as "inactive" (chatbot is done responding)
-def set_conversation_inactive(number):
-    return r.srem("active-conversations", number)
-
-
-# enqueues a user message to be processed when chatbot is done responding
-def pend_user_message(number, message):
-    chat_msg_queue = f"pending-msgs-{number}"
-    to_queue_msg = json.dumps({"type": "user", "content": message})
-    return r.lpush(chat_msg_queue, to_queue_msg)
-
-
-# pops all pending messages
-def pop_pending_messages(number) -> Tuple[List[str], List[str]]:
-    chat_msg_queue = f"pending-msgs-{number}"
-    queued_msgs_list = r.lrange(chat_msg_queue, 0, -1)
-
-    # Remove all messages right after we copy all of them
-    r.ltrim(chat_msg_queue, 1, 0)
-
-    user_msgs = []
-    reminder_msgs = []
-    for msg_raw in queued_msgs_list:
-        msg_obj = json.loads(msg_raw.decode("utf-8"))
-        if msg_obj["type"] == "user":
-            user_msgs.append(msg_obj["content"])
-        elif msg_obj["type"] == "reminder":
-            reminder_msgs.append(msg_obj["content"])
-    return user_msgs, reminder_msgs
