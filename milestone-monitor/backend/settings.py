@@ -31,7 +31,7 @@ redis_url = os.environ.get("REDIS_URL")
 ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
 
 # Redis Config
-REDIS_QUEUE_LENGTH = 10
+REDIS_QUEUE_LENGTH = 20
 
 # Celery Config
 CELERY_BROKER_URL = redis_url

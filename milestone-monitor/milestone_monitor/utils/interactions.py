@@ -126,20 +126,22 @@ def get_goal_info(goal_id: int):
     goal_info.pop("reminder_task", None)
     goal_info.pop("final_task_id", None)
 
-    if "reminder_start_time" in goal_info.keys():
+    print(goal_info)
+
+    if "reminder_start_time" in goal_info and goal_info["reminder_start_time"] is not None:
         goal_info["reminder_start_time"] = datetime.strftime(
             goal_info["reminder_start_time"], "%m/%d/%Y, %H:%M:%S"
         )
-    if "end_at" in goal_info.keys():
+    if "end_at" in goal_info and goal_info["end_at"] is not None:
         goal_info["end_at"] = datetime.strftime(
             goal_info["end_at"], "%m/%d/%Y, %H:%M:%S"
         )
-    if "importance" in goal_info.keys():
-        goal_info["importance"] = importance_to_str(goal_info["importance"])
-    if "reminder_frequency" in goal_info.keys():
-        goal_info["reminder_frequency"] = frequency_to_str(
+    if "importance" in goal_info and goal_info["importance"] is not None:
+        goal_info["importance"] = importance_to_str[goal_info["importance"]]
+    if "reminder_frequency" in goal_info and goal_info["reminder_frequency"] is not None:
+        goal_info["reminder_frequency"] = frequency_to_str[
             goal_info["reminder_frequency"]
-        )
+        ]
 
     return "Goal info: " + str(goal_info)
 
