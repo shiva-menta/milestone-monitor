@@ -108,7 +108,10 @@ class Goal(models.Model):
             not self.reminders_enabled
             and self.reminder_start_time != None
             and self.reminder_frequency != None
-            and self.end_at > timezone.now() + timezone.timedelta(minutes=5)
+            and (
+                self.end_at
+                and self.end_at > timezone.now() + timezone.timedelta(minutes=5)
+            )
         ):
             interval_schedule, _ = self.interval_schedule
             task_kwargs = {
@@ -125,7 +128,9 @@ class Goal(models.Model):
             self.save()
 
     def setup_final_message(self) -> None:
-        if not self.final_task_enabled and self.end_at > timezone.now() + timezone.timedelta(minutes=5):
+        if not self.final_task_enabled and (
+            self.end_at and self.end_at > timezone.now() + timezone.timedelta(minutes=5)
+        ):
             task = send_final_task_message.apply_async(
                 args=[self.user.phone_number, self.title], eta=self.end_at
             )
@@ -184,7 +189,10 @@ class Goal(models.Model):
                     self.reminder_task.interval = interval_schedule
                     self.reminder_task.save()
         if "end_at" in data:
-            if data["end_at"] and (data["end_at"] - timezone.now()).total_seconds() > 300:
+            if (
+                data["end_at"]
+                and (data["end_at"] - timezone.now()).total_seconds() > 300
+            ):
                 self.end_at = data["end_at"]
                 if self.reminders_enabled:
                     self.reminder_task.expires = self.end_at

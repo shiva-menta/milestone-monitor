@@ -89,8 +89,8 @@ You MUST output `GoalDesigner: ` as the final field and nothing more.
 Please follow the exact template below:
 
 FIELD ENTRIES
-Name: Name of the goal
-Description: Description of the goal
+Name: Name of the goal (required)
+Description: Description of the goal (required)
 Goal Type: Answer should be either RECURRING or ONE-TIME. RECURRING if the goal does not have a specific end goal and due date, and ONE-TIME if there is a clear definition of completition for the goal.
 Due Date Year: Year of the due date in YYYY form, if ONE-TIME. The due date is a realistic date when the user needs to complete the goal by.
 Due Date Month: Month of the due date in MM form, if ONE-TIME.

@@ -296,7 +296,6 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
         current_full_output = chain.predict(input=user_input, today=datetime.now())
 
         # Extract field entries and output
-        print(current_full_output)
         current_field_entries = parse_field_entries(
             current_full_output.split("END FIELD ENTRIES")[0].strip()
         )
