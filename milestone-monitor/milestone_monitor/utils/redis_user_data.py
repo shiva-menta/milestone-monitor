@@ -18,6 +18,7 @@ def create_default_user_hist(number):
         "main_memory": [],
         "create_goal_memory": [],
         "current_field_entries": {},
+        "current_field_entries_last_modified": ""
     }
 
     json_data = json.dumps(data)
@@ -90,11 +91,12 @@ def extend_user_msg_memory(number, convo_type, memory_list):
     r.hset(str(key), "data", json_data)
 
 
-def update_current_goal_creation_field_entries(number, field_entries):
+def update_current_goal_creation_field_entries(number, field_entries, last_modified):
     key = number
     data = get_user_hist(key)
 
     data["current_field_entries"] = field_entries
+    data["current_field_entries_last_modified"] = last_modified
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 
@@ -104,6 +106,7 @@ def reset_current_goal_creation_field_entries(number):
     data = get_user_hist(key)
 
     data["current_field_entries"] = {}
+    data["current_field_entries_last_modified"] = ""
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 

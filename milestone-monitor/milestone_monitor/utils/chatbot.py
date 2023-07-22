@@ -24,6 +24,7 @@ from utils.goal_tools import (
     init_create_goal_modify_tool_ALT,
     init_create_goal_finish_tool_ALT,
 )
+from utils.redis_user_data import get_user_hist
 from utils.llm import BASE_CHATBOT_LLM
 
 
@@ -93,6 +94,7 @@ def get_main_chatbot(
     DEBUG=False,
 ) -> AgentExecutor:
     assert memory is not None
+    user_data = get_user_hist(user)
 
     # HACK:
     def _handle_error(error) -> str:
@@ -107,13 +109,18 @@ def get_main_chatbot(
     queue_note = ""
     if is_responding_to_queue:
         queue_note = dedent(
-            """\nIMPORTANT: Please note that the last message from the user was sent BEFORE the final response(s)
+            f"""\nIMPORTANT: Please note that the last message from the user was sent BEFORE the final response(s)
                 from Milestone Monitor that you can see here. The last response you can see here from Milestone Monitor was being
                 written while the user was also texting the chatbot. In other words, the user is responding to the second-to-last
                 message Milestone Monitor sent, and could not have seen the final message Milestone Monitor sent here, so please
                 respond appropriately. For example, if Milestone Monitor just responded with information for a new goal, and the
                 user appears to have responded \"ok\", the user is not responding to that new information, but to an older chatbot message.
-                Please DO NOT repeat any prior actions you just took, such as creating a new goal."""
+                Please DO NOT repeat any prior actions you just took, such as creating a new goal.
+                
+                To properly address this problem, note that each message in the query is appended with the time it was sent. You can
+                use this to determine which messages the user is responding to, and which messages they have not yet seen. If a user responds
+                with an approving message with a timestamp before the last time an in-progress goal was modified, {user_data['current_field_entries_last_modified']},
+                you should assume that the user is responding to something else, not approving the in-progress goal."""
         )
 
     # Initialize agent

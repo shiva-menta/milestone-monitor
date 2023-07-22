@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.http import HttpResponse, JsonResponse
 from celery_once import QueueOnce
+from datetime import datetime
 
 from backend.redis import get_redis_client
 from utils.conversation_handler import chatbot_respond_ALT
@@ -29,6 +30,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         which will handle the process of sending a text message back to the user
     """
     chat_msg_queue = f"pending-msgs-{request_sndr}"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Reset the user's conversation type (for testing)
     # r.srem("active-conversations", request_sndr)
@@ -38,7 +40,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         print(">>> Conversation is currently active, queueing")
 
         # queue up the message
-        to_queue_msg = json.dumps({"type": "user", "content": request_msg})
+        to_queue_msg = json.dumps({"type": "user", "content": request_msg, "timestamp": timestamp})
         r.lpush(chat_msg_queue, to_queue_msg)
     else:
         # Conversation is not currently active, so we can respond immediately
@@ -48,7 +50,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         r.sadd("active-conversations", request_sndr)
 
         # Initiate chatbot conversation
-        chatbot_respond_ALT(request_msg, request_sndr)
+        chatbot_respond_ALT(f"{request_msg} – Sent At: {timestamp}", request_sndr)
 
         # Get messages in queue
         pipe = r.pipeline()
@@ -65,7 +67,7 @@ def chatbot_respond_async(request_msg, request_sndr):
             for msg_raw in queued_msgs_list:
                 msg_obj = json.loads(msg_raw.decode("utf-8"))
                 if msg_obj["type"] == "user":
-                    user_msgs.append(msg_obj["content"])
+                    user_msgs.append(f"{msg_obj['content']} – Sent At: {msg_obj['timestamp']}")
                 elif msg_obj["type"] == "reminder":
                     reminder_msgs.append(msg_obj["content"])
 

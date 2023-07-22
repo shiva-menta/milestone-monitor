@@ -222,6 +222,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
     user_data = get_user_hist(user)
 
     def create_goal_tool(query: str) -> str:
+        print(">>> CALLED create_goal_tool")
         """
         A tool that should be called whenever the bot needs to respond in a fashion related
         to creating a goal.
@@ -267,7 +268,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
         ].strip()
 
         # Store field entries info locally
-        update_current_goal_creation_field_entries(user, current_field_entries)
+        update_current_goal_creation_field_entries(user, current_field_entries, datetime.now())
 
         # If the status is marked as success, then we shouldn't have to call
         # the tool again until the next time the user wants to create a goal
@@ -276,6 +277,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
             # and add them to the database
             formatted_text_fields = format_text_fields(current_field_entries)
             create_goal(formatted_text_fields, user)
+            reset_current_goal_creation_field_entries(user)
             return "Goal successfully created!"
 
         # This output will be used directly
@@ -286,6 +288,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
 
 
 def init_create_goal_modify_tool_ALT(user: str) -> callable:
+    print(">>> CALLED init_create_goal_modify_tool_ALT")
     user_data = get_user_hist(user)
 
     def create_goal_modify_tool(query: str) -> str:
@@ -335,7 +338,7 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
         ].strip()
 
         # Store field entries info locally
-        update_current_goal_creation_field_entries(user, current_field_entries)
+        update_current_goal_creation_field_entries(user, current_field_entries, datetime.now())
 
         # If the status is marked as success, then we shouldn't have to call
         # the tool again until the next time the user wants to create a goal
@@ -344,6 +347,7 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
             # and add them to the database
             formatted_text_fields = format_text_fields(current_field_entries)
             create_goal(formatted_text_fields, user)
+            reset_current_goal_creation_field_entries(user)
             return "Goal successfully created!"
 
         # This output will be used directly
@@ -354,6 +358,7 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
 
 
 def init_create_goal_finish_tool_ALT(user: str) -> callable:
+    print(">>> CALLED init_create_goal_finish_tool_ALT")
     def create_goal_finish_tool(query: str) -> str:
         # Need to get the most updated version of user data
         user_data = get_user_hist(user)
