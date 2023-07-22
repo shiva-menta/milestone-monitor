@@ -14,11 +14,12 @@ def dict_to_memory(memory_dict: List[dict], k=3) -> ConversationBufferWindowMemo
         k=k,
     )
     buffer = messages_from_dict(memory_dict)
-    for message in buffer:
-        current_human_message = ""
-        current_ai_message = ""
-        last_added_message_type = ""
 
+    last_added_message_type = ""
+    current_human_message = ""
+    current_ai_message = ""
+
+    for message in buffer:
         # Encountered a human message
         if isinstance(message, HumanMessage):
             if last_added_message_type == "ai":

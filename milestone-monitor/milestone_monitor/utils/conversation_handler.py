@@ -114,6 +114,7 @@ def chatbot_respond(query, user):
 # Upon rec
 def chatbot_respond_ALT(query, user):
     user_data = get_user_hist(user)
+    print(user_data)
 
     main_memory = dict_to_memory(user_data["main_memory"])
     is_creating_goal = len(user_data["current_field_entries"]) > 0
