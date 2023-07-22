@@ -42,7 +42,7 @@ Note that the current time is {current_time}.
 """
 
 
-# Generates the tools for a specific user
+# Generates all tools needed by LangChain for a specific user.
 def generate_main_tools(user: str):
     tools = [
         Tool.from_function(

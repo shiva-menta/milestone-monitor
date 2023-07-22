@@ -8,6 +8,7 @@ from backend.celery import app
 import json
 from milestone_monitor.tasks import send_final_task_message
 from datetime import datetime
+from django.utils import timezone
 
 
 # Attribute Custom Fields
@@ -75,7 +76,7 @@ class Goal(models.Model):
         blank=True,
     )
     final_task_enabled = models.BooleanField(default=False)
-    final_task_id = models.CharField(max_length=100, null=True, default="")
+    final_task_id = models.CharField(max_length=100, null=True, default=None)
 
     @property
     def interval_schedule(self):
@@ -107,6 +108,7 @@ class Goal(models.Model):
             not self.reminders_enabled
             and self.reminder_start_time != None
             and self.reminder_frequency != None
+            and self.end_at > timezone.now() + timezone.timedelta(minutes=5)
         ):
             interval_schedule, _ = self.interval_schedule
             task_kwargs = {
@@ -123,7 +125,7 @@ class Goal(models.Model):
             self.save()
 
     def setup_final_message(self) -> None:
-        if not self.final_task_enabled and self.end_at:
+        if not self.final_task_enabled and self.end_at > timezone.now() + timezone.timedelta(minutes=5):
             task = send_final_task_message.apply_async(
                 args=[self.user.phone_number, self.title], eta=self.end_at
             )
@@ -134,9 +136,10 @@ class Goal(models.Model):
     def cancel_reminder_messages(self) -> None:
         if self.reminders_enabled:
             self.reminders_enabled = False
-            self.reminder_task.delete()
-            self.reminder_task.save()
-            self.reminder_task = None
+            if self.reminder_task:
+                self.reminder_task.delete()
+                self.reminder_task = None
+            self.reminder_start_time = None
             self.save()
 
     def cancel_final_message(self) -> None:
@@ -163,7 +166,7 @@ class Goal(models.Model):
 
         # Change Goal Object With Reminder-Relevant Data
         if "reminder_start_time" in data:
-            if (data["reminder_start_time"] - datetime.now()).total_seconds() > 0:
+            if (data["reminder_start_time"] - timezone.now()).total_seconds() > 0:
                 self.reminder_start_time = data["reminder_start_time"]
                 if self.reminders_enabled:
                     self.reminder_task.start_time = self.reminder_start_time
@@ -179,8 +182,9 @@ class Goal(models.Model):
                 if self.reminders_enabled:
                     interval_schedule, _ = self.interval_schedule
                     self.reminder_task.interval = interval_schedule
+                    self.reminder_task.save()
         if "end_at" in data:
-            if (data["end_at"] - datetime.now()).total_seconds() > 300:
+            if data["end_at"] and (data["end_at"] - timezone.now()).total_seconds() > 300:
                 self.end_at = data["end_at"]
                 if self.reminders_enabled:
                     self.reminder_task.expires = self.end_at
@@ -192,7 +196,13 @@ class Goal(models.Model):
                     )
                     self.final_task_id = task.id
             else:
-                raise Exception("Invalid date given.")
+                if data["end_at"] is None:
+                    self.end_at = None
+                    self.reminder_task.expires = self.end_at
+                    self.reminder_task.save()
+                    self.cancel_final_message()
+                else:
+                    raise Exception("Invalid date given.")
         self.save()
 
         if (
@@ -217,6 +227,6 @@ class Goal(models.Model):
                     "Cannot make previous goal incomplete. Set a new goal instead."
                 )
             self.completed = True
-            self.end_at = datetime.now()
+            self.end_at = timezone.now()
             self.cancel_reminder_messages()
             self.cancel_final_message()

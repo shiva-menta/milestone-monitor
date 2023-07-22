@@ -8,7 +8,6 @@ str_to_frequency = {
     "MONTHLY": Frequency.MONTHLY,
     "MINUTELY": Frequency.MINUTELY,
 }
-
 str_to_importance = {
     "LOW": Importance.LOW,
     "MEDIUM": Importance.MEDIUM,
