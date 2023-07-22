@@ -37,6 +37,9 @@ def get_and_create_user(phone_number: str):
 
 
 def create_goal(goal_data: dict, phone_number: str):
+    print("Goal data:")
+    print(goal_data)
+
     """
     Creates a goal based on input data for a specific user.
 
@@ -72,7 +75,7 @@ def create_goal(goal_data: dict, phone_number: str):
         "completed": False,
     }
 
-    if "dueDate" in goal_data:
+    if "dueDate" in goal_data and goal_data["dueDate"]:
         end_at = parse_datetime(goal_data["dueDate"])
         ny_tz = pytz.timezone("America/New_York")
         aware_dt = ny_tz.localize(end_at)

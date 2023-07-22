@@ -36,5 +36,6 @@ def get_create_goal_chain(memory: ConversationBufferWindowMemory, DEBUG=False) -
         verbose=True,
         memory=memory,
     )
+    print(memory)
 
     return create_goal_chain
