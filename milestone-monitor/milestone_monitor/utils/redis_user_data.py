@@ -6,6 +6,7 @@ import sys
 from backend.settings import REDIS_QUEUE_LENGTH
 from backend.redis import get_redis_client
 from typing import Tuple, List
+from datetime import datetime
 
 r = get_redis_client()
 
@@ -18,6 +19,7 @@ def create_default_user_hist(number):
         "main_memory": [],
         "create_goal_memory": [],
         "current_field_entries": {},
+        "last_user_message_time": "",
         "current_field_entries_last_modified": ""
     }
 
@@ -96,10 +98,17 @@ def update_current_goal_creation_field_entries(number, field_entries, last_modif
     data = get_user_hist(key)
 
     data["current_field_entries"] = field_entries
-    data["current_field_entries_last_modified"] = last_modified
+    data["current_field_entries_last_modified"] = datetime.strftime(last_modified, "%m/%d/%Y %H:%M")
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 
+def update_last_modified(number, last_modified):
+    key = number
+    data = get_user_hist(key)
+
+    data["last_user_message_time"] = datetime.strftime(last_modified, "%Y-%m-%d %H:%M:%S")
+    json_data = json.dumps(data)
+    r.hset(str(key), "data", json_data)
 
 def reset_current_goal_creation_field_entries(number):
     key = number

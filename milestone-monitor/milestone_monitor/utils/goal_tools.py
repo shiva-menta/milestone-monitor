@@ -6,6 +6,7 @@ import traceback
 
 from datetime import datetime, timedelta
 from re import sub
+import re
 
 from langchain import LLMChain
 from langchain.agents import tool, create_sql_agent
@@ -289,16 +290,18 @@ def init_create_goal_tool_ALT(user: str) -> callable:
 
 def init_create_goal_modify_tool_ALT(user: str) -> callable:
     print(">>> CALLED init_create_goal_modify_tool_ALT")
-    user_data = get_user_hist(user)
-
     def create_goal_modify_tool(query: str) -> str:
         """
         A tool that should be called whenever the bot needs to respond in a fashion related
         to creating a goal.
         """
-
+        user_data = get_user_hist(user)
         user_input = query
         current_field_entries = None
+
+        # check if timestamp on message is valid
+        if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
+            return "User's previous message was sent before."
 
         # If this tool is being run, we can optionally alert the user that we're working
         # on adding a goal for them (so they know that the model is "thinking")
@@ -363,6 +366,11 @@ def init_create_goal_finish_tool_ALT(user: str) -> callable:
         # Need to get the most updated version of user data
         user_data = get_user_hist(user)
         field_entries = user_data["current_field_entries"]
+
+        # check if timestamp on message is valid
+        if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
+            return "User's previous message was sent before."
+
         send_sms(user, "Ok, I'm saving your goal!")
         extend_user_msg_memory(
             user,

@@ -11,6 +11,7 @@ from utils.redis_user_data import (
     update_user_convo_type,
     extend_user_msg_memory,
     create_default_user_hist,
+    update_last_modified
 )
 
 import json
@@ -30,7 +31,6 @@ def chatbot_respond_async(request_msg, request_sndr):
         which will handle the process of sending a text message back to the user
     """
     chat_msg_queue = f"pending-msgs-{request_sndr}"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Reset the user's conversation type (for testing)
     # r.srem("active-conversations", request_sndr)
@@ -50,7 +50,8 @@ def chatbot_respond_async(request_msg, request_sndr):
         r.sadd("active-conversations", request_sndr)
 
         # Initiate chatbot conversation
-        chatbot_respond_ALT(f"{request_msg} – Sent At: {timestamp}", request_sndr)
+        update_last_modified(request_sndr, datetime.now())
+        chatbot_respond_ALT(request_msg, request_sndr)
 
         # Get messages in queue
         pipe = r.pipeline()
@@ -64,10 +65,14 @@ def chatbot_respond_async(request_msg, request_sndr):
             # Sort messages into user messages and reminder messages
             user_msgs = []
             reminder_msgs = []
+            timestamp_set = False
             for msg_raw in queued_msgs_list:
                 msg_obj = json.loads(msg_raw.decode("utf-8"))
                 if msg_obj["type"] == "user":
-                    user_msgs.append(f"{msg_obj['content']} – Sent At: {msg_obj['timestamp']}")
+                    if not timestamp_set:
+                        update_last_modified(request_sndr, datetime.now())
+                        timestamp_set = True
+                    user_msgs.append(msg_obj["content"])
                 elif msg_obj["type"] == "reminder":
                     reminder_msgs.append(msg_obj["content"])
 
