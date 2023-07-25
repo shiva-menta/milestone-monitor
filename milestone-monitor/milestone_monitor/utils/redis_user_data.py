@@ -106,7 +106,7 @@ def update_last_modified(number, last_modified):
     key = number
     data = get_user_hist(key)
 
-    data["last_user_message_time"] = datetime.strftime(last_modified, "%Y-%m-%d %H:%M:%S")
+    data["last_user_message_time"] = last_modified
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 

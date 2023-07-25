@@ -44,5 +44,6 @@ def chatbot_respond_ALT(query, user, is_responding_to_queue=False):
     save_user_msg_memory(user, "main", memory_to_dict(main_memory))
 
     # Send output as an SMS
-    send_sms(user, output)
+    if output != "You are already in the process of creating a goal!":
+        send_sms(user, output)
     return HttpResponse("Text sent.")

@@ -220,8 +220,6 @@ def prettify_field_entries(fields: dict):
 
 
 def init_create_goal_tool_ALT(user: str) -> callable:
-    user_data = get_user_hist(user)
-
     def create_goal_tool(query: str) -> str:
         print(">>> CALLED create_goal_tool")
         """
@@ -229,8 +227,12 @@ def init_create_goal_tool_ALT(user: str) -> callable:
         to creating a goal.
         """
 
+        user_data = get_user_hist(user)
         user_input = query
         current_field_entries = None
+
+        if user_data["current_field_entries"] != {}:
+            return "You are already in the process of creating a goal!"
 
         # If this tool is being run, we can optionally alert the user that we're working
         # on adding a goal for them (so they know that the model is "thinking")
@@ -301,7 +303,7 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
 
         # check if timestamp on message is valid
         if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
-            return "User's previous message was sent before."
+            return "You are already in the process of creating a goal!"
 
         # If this tool is being run, we can optionally alert the user that we're working
         # on adding a goal for them (so they know that the model is "thinking")
@@ -369,7 +371,7 @@ def init_create_goal_finish_tool_ALT(user: str) -> callable:
 
         # check if timestamp on message is valid
         if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
-            return "User's previous message was sent before."
+            return "You are already in the process of creating a goal!"
 
         send_sms(user, "Ok, I'm saving your goal!")
         extend_user_msg_memory(

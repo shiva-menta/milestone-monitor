@@ -31,6 +31,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         which will handle the process of sending a text message back to the user
     """
     chat_msg_queue = f"pending-msgs-{request_sndr}"
+    
 
     # Reset the user's conversation type (for testing)
     # r.srem("active-conversations", request_sndr)
@@ -40,6 +41,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         print(">>> Conversation is currently active, queueing")
 
         # queue up the message
+        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M")
         to_queue_msg = json.dumps({"type": "user", "content": request_msg, "timestamp": timestamp})
         r.lpush(chat_msg_queue, to_queue_msg)
     else:
@@ -50,7 +52,8 @@ def chatbot_respond_async(request_msg, request_sndr):
         r.sadd("active-conversations", request_sndr)
 
         # Initiate chatbot conversation
-        update_last_modified(request_sndr, datetime.now())
+        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M")
+        update_last_modified(request_sndr, timestamp)
         chatbot_respond_ALT(request_msg, request_sndr)
 
         # Get messages in queue
@@ -70,7 +73,7 @@ def chatbot_respond_async(request_msg, request_sndr):
                 msg_obj = json.loads(msg_raw.decode("utf-8"))
                 if msg_obj["type"] == "user":
                     if not timestamp_set:
-                        update_last_modified(request_sndr, datetime.now())
+                        update_last_modified(request_sndr, msg_obj["timestamp"])
                         timestamp_set = True
                     user_msgs.append(msg_obj["content"])
                 elif msg_obj["type"] == "reminder":
