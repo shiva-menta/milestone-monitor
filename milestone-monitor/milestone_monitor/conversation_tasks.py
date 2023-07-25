@@ -11,7 +11,7 @@ from utils.redis_user_data import (
     update_user_convo_type,
     extend_user_msg_memory,
     create_default_user_hist,
-    update_last_modified
+    update_last_modified,
 )
 
 import json
@@ -31,7 +31,6 @@ def chatbot_respond_async(request_msg, request_sndr):
         which will handle the process of sending a text message back to the user
     """
     chat_msg_queue = f"pending-msgs-{request_sndr}"
-    
 
     # Reset the user's conversation type (for testing)
     # r.srem("active-conversations", request_sndr)
@@ -41,9 +40,11 @@ def chatbot_respond_async(request_msg, request_sndr):
         print(">>> Conversation is currently active, queueing")
 
         # queue up the message
-        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M")
-        to_queue_msg = json.dumps({"type": "user", "content": request_msg, "timestamp": timestamp})
-        r.lpush(chat_msg_queue, to_queue_msg)
+        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        to_queue_msg = json.dumps(
+            {"type": "user", "content": request_msg, "timestamp": timestamp}
+        )
+        r.rpush(chat_msg_queue, to_queue_msg)
     else:
         # Conversation is not currently active, so we can respond immediately
         print(">>> Setting conversation as active")
@@ -52,7 +53,7 @@ def chatbot_respond_async(request_msg, request_sndr):
         r.sadd("active-conversations", request_sndr)
 
         # Initiate chatbot conversation
-        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M")
+        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         update_last_modified(request_sndr, timestamp)
         chatbot_respond_ALT(request_msg, request_sndr)
 

@@ -46,7 +46,12 @@ Note that the current time is {current_time}.
 
 
 # Generates all tools needed by LangChain for a specific user.
-def generate_main_tools(user: str):
+# "dont_finish_create" is a hacky workaround for the fact that
+# langchain doesn't allow you to dynamically decide whether or not
+# to return outputs directly
+def generate_main_tools(user: str, dont_finish_create: bool):
+    print(dont_finish_create)
+
     tools = [
         Tool.from_function(
             name="Start Create New Goal",
@@ -64,6 +69,7 @@ def generate_main_tools(user: str):
             name="Finish Creating New Goal",
             func=init_create_goal_finish_tool_ALT(user),
             description=str(GOAL_CREATE_FINISH_TOOL_DESC),
+            return_direct=bool(dont_finish_create),
         ),
         Tool.from_function(
             name="Get Specific Existing Goal Info",
@@ -91,6 +97,7 @@ def get_main_chatbot(
     memory: ConversationBufferWindowMemory,
     is_creating_goal: bool,
     is_responding_to_queue=False,
+    dont_finish_create=False,
     DEBUG=False,
 ) -> AgentExecutor:
     assert memory is not None
@@ -116,14 +123,24 @@ def get_main_chatbot(
     # TODO: need datetime to provide the actual local time
     agent_chain = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-        tools=generate_main_tools(user),
+        tools=generate_main_tools(
+            user,
+            user_data["last_user_message_time"]
+            and user_data["current_field_entries_last_modified"]
+            and datetime.strptime(
+                user_data["last_user_message_time"], "%m/%d/%Y %H:%M:%S"
+            )
+            < datetime.strptime(
+                user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M:%S"
+            ),
+        ),
         llm=BASE_CHATBOT_LLM,
         verbose=DEBUG,
         memory=memory,
         handle_parsing_errors=_handle_error,
         agent_kwargs={
             "system_message": MILESTONE_MONITOR_PREFIX.format(
-                current_time=datetime.strftime(datetime.now(), "%m/%d/%Y %H:%M"),
+                current_time=datetime.strftime(datetime.now(), "%m/%d/%Y %H:%M:%S"),
                 extra_notes=create_goal_note + queue_note,
             )
         },

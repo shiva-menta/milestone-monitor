@@ -6,7 +6,6 @@ import traceback
 
 from datetime import datetime, timedelta
 from re import sub
-import re
 
 from langchain import LLMChain
 from langchain.agents import tool, create_sql_agent
@@ -14,7 +13,7 @@ from langchain.memory import ConversationBufferWindowMemory
 
 from utils.constants import str_to_frequency, str_to_importance
 from utils.create_goal_chain import get_create_goal_chain
-from utils.goal_prompts import GOAL_DB_PREFIX, create_goal_chain_prompt
+from utils.goal_prompts import create_goal_chain_prompt
 from utils.interactions import (
     create_goal,
     get_goal_info,
@@ -23,9 +22,8 @@ from utils.interactions import (
     get_all_goals,
 )
 from utils.llm import BASE_CHATBOT_LLM
-from utils.memory_utils import memory_to_dict, dict_to_memory
+from utils.memory_utils import dict_to_memory
 from utils.redis_user_data import (
-    update_user_convo_type,
     extend_user_msg_memory,
     get_user_hist,
     update_current_goal_creation_field_entries,
@@ -271,7 +269,9 @@ def init_create_goal_tool_ALT(user: str) -> callable:
         ].strip()
 
         # Store field entries info locally
-        update_current_goal_creation_field_entries(user, current_field_entries, datetime.now())
+        update_current_goal_creation_field_entries(
+            user, current_field_entries, datetime.now()
+        )
 
         # If the status is marked as success, then we shouldn't have to call
         # the tool again until the next time the user wants to create a goal
@@ -292,6 +292,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
 
 def init_create_goal_modify_tool_ALT(user: str) -> callable:
     print(">>> CALLED init_create_goal_modify_tool_ALT")
+
     def create_goal_modify_tool(query: str) -> str:
         """
         A tool that should be called whenever the bot needs to respond in a fashion related
@@ -302,7 +303,11 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
         current_field_entries = None
 
         # check if timestamp on message is valid
-        if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
+        if datetime.strptime(
+            user_data["last_user_message_time"], "%m/%d/%Y %H:%M:%S"
+        ) < datetime.strptime(
+            user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M:%S"
+        ):
             return "You are already in the process of creating a goal!"
 
         # If this tool is being run, we can optionally alert the user that we're working
@@ -343,7 +348,9 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
         ].strip()
 
         # Store field entries info locally
-        update_current_goal_creation_field_entries(user, current_field_entries, datetime.now())
+        update_current_goal_creation_field_entries(
+            user, current_field_entries, datetime.now()
+        )
 
         # If the status is marked as success, then we shouldn't have to call
         # the tool again until the next time the user wants to create a goal
@@ -364,13 +371,18 @@ def init_create_goal_modify_tool_ALT(user: str) -> callable:
 
 def init_create_goal_finish_tool_ALT(user: str) -> callable:
     print(">>> CALLED init_create_goal_finish_tool_ALT")
+
     def create_goal_finish_tool(query: str) -> str:
         # Need to get the most updated version of user data
         user_data = get_user_hist(user)
         field_entries = user_data["current_field_entries"]
 
         # check if timestamp on message is valid
-        if datetime.strptime(user_data["last_user_message_time"], "%m/%d/%Y %H:%M") < datetime.strptime(user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M"):
+        if datetime.strptime(
+            user_data["last_user_message_time"], "%m/%d/%Y %H:%M:%S"
+        ) < datetime.strptime(
+            user_data["current_field_entries_last_modified"], "%m/%d/%Y %H:%M:%S"
+        ):
             return "You are already in the process of creating a goal!"
 
         send_sms(user, "Ok, I'm saving your goal!")

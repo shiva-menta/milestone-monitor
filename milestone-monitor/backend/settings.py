@@ -53,7 +53,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "https://milestone-monitor.fly.dev",
     ngrok_forwarding,
-    "c85e-108-16-122-140.ngrok-free.app",
+    "1d02-108-16-122-140.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = ["https://milestone-monitor.fly.dev"]

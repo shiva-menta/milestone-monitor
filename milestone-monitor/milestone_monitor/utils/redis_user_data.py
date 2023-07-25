@@ -20,7 +20,8 @@ def create_default_user_hist(number):
         "create_goal_memory": [],
         "current_field_entries": {},
         "last_user_message_time": "",
-        "current_field_entries_last_modified": ""
+        "current_field_entries_last_modified": "",
+        "update_goal_creation_in_progress_bot_response": False,
     }
 
     json_data = json.dumps(data)
@@ -98,9 +99,31 @@ def update_current_goal_creation_field_entries(number, field_entries, last_modif
     data = get_user_hist(key)
 
     data["current_field_entries"] = field_entries
-    data["current_field_entries_last_modified"] = datetime.strftime(last_modified, "%m/%d/%Y %H:%M")
+    data["current_field_entries_last_modified"] = datetime.strftime(
+        last_modified, "%m/%d/%Y %H:%M:%S"
+    )
+    data["update_goal_creation_in_progress_bot_response"] = True
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
+
+
+# should be called when the sms is being sent
+def refresh_goal_creation_in_progress_bot_response(number):
+    key = number
+    data = get_user_hist(key)
+
+    # if we're in the middle of a creation response, then update the timestamp
+    if data["update_goal_creation_in_progress_bot_response"]:
+        last_modified = datetime.now()
+        data["current_field_entries_last_modified"] = datetime.strftime(
+            last_modified, "%m/%d/%Y %H:%M:%S"
+        )
+
+        # then reset
+        data["update_goal_creation_in_progress_bot_response"] = False
+        json_data = json.dumps(data)
+        r.hset(str(key), "data", json_data)
+
 
 def update_last_modified(number, last_modified):
     key = number
@@ -110,12 +133,14 @@ def update_last_modified(number, last_modified):
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 
+
 def reset_current_goal_creation_field_entries(number):
     key = number
     data = get_user_hist(key)
 
     data["current_field_entries"] = {}
     data["current_field_entries_last_modified"] = ""
+    data["update_goal_creation_in_progress_bot_response"] = True
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
 

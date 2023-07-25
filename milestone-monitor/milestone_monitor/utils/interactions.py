@@ -128,7 +128,10 @@ def get_goal_info(goal_id: int):
 
     print(goal_info)
 
-    if "reminder_start_time" in goal_info and goal_info["reminder_start_time"] is not None:
+    if (
+        "reminder_start_time" in goal_info
+        and goal_info["reminder_start_time"] is not None
+    ):
         goal_info["reminder_start_time"] = datetime.strftime(
             goal_info["reminder_start_time"], "%m/%d/%Y, %H:%M:%S"
         )
@@ -138,7 +141,10 @@ def get_goal_info(goal_id: int):
         )
     if "importance" in goal_info and goal_info["importance"] is not None:
         goal_info["importance"] = importance_to_str[goal_info["importance"]]
-    if "reminder_frequency" in goal_info and goal_info["reminder_frequency"] is not None:
+    if (
+        "reminder_frequency" in goal_info
+        and goal_info["reminder_frequency"] is not None
+    ):
         goal_info["reminder_frequency"] = frequency_to_str[
             goal_info["reminder_frequency"]
         ]

@@ -11,6 +11,7 @@ from .create_goal_chain import get_create_goal_chain
 from .redis_user_data import (
     get_user_hist,
     save_user_msg_memory,
+    refresh_goal_creation_in_progress_bot_response,
 )
 
 
@@ -46,4 +47,5 @@ def chatbot_respond_ALT(query, user, is_responding_to_queue=False):
     # Send output as an SMS
     if output != "You are already in the process of creating a goal!":
         send_sms(user, output)
+        refresh_goal_creation_in_progress_bot_response(user)
     return HttpResponse("Text sent.")
