@@ -1,19 +1,17 @@
-ARG PYTHON_VERSION=3.10-slim-buster
-
-FROM python:${PYTHON_VERSION}
+FROM python:3.10-slim-buster
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /code
+RUN mkdir /code
 
 WORKDIR /code
 
-COPY requirements.txt /code/requirements.txt
-RUN pip install -r requirements.txt
-# COPY Pipfile Pipfile.lock /code/
-# RUN pipenv install --deploy --system
-COPY . /code
+RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install
+
+COPY . .
 
 EXPOSE 8000
 
