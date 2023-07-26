@@ -17,7 +17,9 @@ pinecone-client = "*"
 cohere = "*"
 celery-once = "*"
 pytz = "*"
-psycopg2-binary = "*"
 fakeredis = "*"
+dj-database-url = "*"
+psycopg2 = "*"
+gunicorn = "*"
 
 [dev-packages]

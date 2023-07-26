@@ -11,12 +11,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
-import sys
+import dj_database_url
 
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +26,8 @@ pg_pass = os.environ.get("POSTGRES_PASSWORD")
 pg_db = os.environ.get("POSTGRES_DB")
 redis_url = os.environ.get("REDIS_URL")
 ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
+is_development = os.environ.get("IS_DEPLOYMENT") == "True"
+database_url = os.environ.get("DATABASE_URL")
 
 # Redis Config
 REDIS_QUEUE_LENGTH = 20
@@ -51,12 +50,10 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "https://milestone-monitor.fly.dev",
-    ngrok_forwarding,
-    "1d02-108-16-122-140.ngrok-free.app",
+    ".fly.dev"
 ]
 
-CSRF_TRUSTED_ORIGINS = ["https://milestone-monitor.fly.dev"]
+CSRF_TRUSTED_ORIGINS = ["https://*.fly.dev"]
 
 
 # Application definition
@@ -106,16 +103,23 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": pg_db,
-        "USER": pg_user,
-        "PASSWORD": pg_pass,
-        "HOST": "localhost",
-        "PORT": 5432,
+if is_development:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": pg_db,
+            "USER": pg_user,
+            "PASSWORD": pg_pass,
+            "HOST": "localhost",
+            "PORT": 5432,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=database_url
+        )
+    }
 
 
 # Password validation
