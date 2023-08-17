@@ -24,9 +24,11 @@ messaging_service_sid = os.environ.get("MESSAGING_SERVICE_SID")
 pg_user = os.environ.get("POSTGRES_USER")
 pg_pass = os.environ.get("POSTGRES_PASSWORD")
 pg_db = os.environ.get("POSTGRES_DB")
+pg_host = os.environ.get("POSTGRES_HOST")
 redis_url = os.environ.get("REDIS_URL")
 ngrok_forwarding = os.environ.get("NGROK_FORWARDING")
-is_development = os.environ.get("IS_DEPLOYMENT") == "True"
+is_development = os.environ.get("IS_DEVELOPMENT")
+# is_development = os.environ.get("IS_DEPLOYMENT") == "True"
 database_url = os.environ.get("DATABASE_URL")
 
 # Redis Config
@@ -45,11 +47,12 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 SECRET_KEY = "django-insecure-uacs21$(w==*xcus+gzpun+2k2lf1+zm9f@p0m)9rbcfz$p6ab"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = is_development
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    ngrok_forwarding,
     ".fly.dev"
 ]
 
@@ -103,14 +106,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-if is_development:
+if is_development == "true":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": pg_db,
             "USER": pg_user,
             "PASSWORD": pg_pass,
-            "HOST": "localhost",
+            "HOST": pg_host,
             "PORT": 5432,
         }
     }
