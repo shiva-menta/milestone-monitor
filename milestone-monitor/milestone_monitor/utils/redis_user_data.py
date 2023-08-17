@@ -69,7 +69,7 @@ def save_user_msg_memory(number, convo_type, memory_list):
     key = number
     data = get_user_hist(key)
     data["main_memory"] = memory_list[-REDIS_QUEUE_LENGTH:]
-    print(data["main_memory"])
+    # print(data["main_memory"])
 
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)
@@ -88,7 +88,7 @@ def extend_user_msg_memory(number, convo_type, memory_list):
     data = get_user_hist(key)
     data["main_memory"].extend(memory_list)
     data["main_memory"] = data["main_memory"][-REDIS_QUEUE_LENGTH:]
-    print(data["main_memory"])
+    # print(data["main_memory"])
 
     json_data = json.dumps(data)
     r.hset(str(key), "data", json_data)

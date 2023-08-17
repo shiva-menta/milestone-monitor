@@ -260,7 +260,7 @@ def init_create_goal_tool_ALT(user: str) -> callable:
         current_full_output = chain.predict(input=user_input, today=datetime.now())
 
         # Extract field entries and output
-        print(current_full_output)
+        # print(current_full_output)
         current_field_entries = parse_field_entries(
             current_full_output.split("END FIELD ENTRIES")[0].strip()
         )
@@ -452,7 +452,7 @@ def init_modify_specific_goal_tool(user: str) -> callable:
         A tool used to edit information about a specific goal.
         """
 
-        print(query)
+        # print(query)
 
         goal_name_query, modifications = query.split(": ", 1)
         modifications = json.loads(modifications)
@@ -460,7 +460,6 @@ def init_modify_specific_goal_tool(user: str) -> callable:
             new_time = datetime.strptime(
                 modifications["reminder_start_time"], "%H:%M:%S"
             ).time()
-            print(datetime, timedelta)
             tomorrow = datetime.now() + timedelta(days=1)
             modifications["reminder_start_time"] = datetime.combine(tomorrow, new_time)
         if "frequency" in modifications.keys():
@@ -472,7 +471,7 @@ def init_modify_specific_goal_tool(user: str) -> callable:
                 modifications["importance"], 0
             )
 
-        print(modifications)
+        # print(modifications)
 
         # Retrieve goal by query
         goal_id = retrieve_goal_pinecone(goal_name_query, user[1:])
@@ -482,7 +481,7 @@ def init_modify_specific_goal_tool(user: str) -> callable:
             modify_goal(goal_id, modifications)
             return "Goal modified successfully!"
         except Exception:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             # print(e)
             return "Error occurred when modifying goal."
 

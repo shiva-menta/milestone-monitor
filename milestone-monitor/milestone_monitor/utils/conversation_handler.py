@@ -25,7 +25,7 @@ def chatbot_respond_ALT(query, user, is_responding_to_queue=False):
         main_memory = create_main_memory()
 
     print(">>> Current user data:")
-    print(user_data)
+    # print(user_data)
     print("IS CREATING GOAL:", is_creating_goal)
 
     # Load chatbot with memory
@@ -36,8 +36,8 @@ def chatbot_respond_ALT(query, user, is_responding_to_queue=False):
     # Get output from the chatbot
     # if we entered the create goal convo, it automatically
     # uses that output
-    print("Query:", query)
-    print("Memory:", main_memory)
+    # print("Query:", query)
+    # print("Memory:", main_memory)
     output = chatbot.run(input=query)
 
     # Save memory

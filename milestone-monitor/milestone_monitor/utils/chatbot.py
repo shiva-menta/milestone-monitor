@@ -145,11 +145,11 @@ def get_main_chatbot(
             )
         },
     )
-    print(
-        "PROMPT TEMPLATE:",
-        agent_chain.agent.llm_chain.prompt.messages[0].prompt.template,
-    )
-    print(len(agent_chain.agent.llm_chain.prompt.messages))
+    # print(
+    #     "PROMPT TEMPLATE:",
+    #     agent_chain.agent.llm_chain.prompt.messages[0].prompt.template,
+    # )
+    # print(len(agent_chain.agent.llm_chain.prompt.messages))
 
     # Call the agent using agent.run(input="...")
     return agent_chain

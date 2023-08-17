@@ -38,7 +38,7 @@ def get_and_create_user(phone_number: str):
 
 def create_goal(goal_data: dict, phone_number: str):
     print("Goal data:")
-    print(goal_data)
+    # print(goal_data)
 
     """
     Creates a goal based on input data for a specific user.
@@ -126,7 +126,7 @@ def get_goal_info(goal_id: int):
     goal_info.pop("reminder_task", None)
     goal_info.pop("final_task_id", None)
 
-    print(goal_info)
+    # print(goal_info)
 
     if (
         "reminder_start_time" in goal_info
@@ -163,7 +163,7 @@ def get_all_goals() -> str:
 
 
 def create_goal_pinecone(goal_id: int, goal_description: str, user: str):
-    print(goal_id, goal_description, user)
+    # print(goal_id, goal_description, user)
 
     """
     Adds the goal to pinecone
@@ -221,7 +221,7 @@ def retrieve_goal_pinecone(query: str, user: str) -> int:
         filter={"type": {"$eq": "title_and_desc"}},
         namespace=user,
     )
-    print(res)
+    # print(res)
     return int(res["matches"][0]["id"])
 
 

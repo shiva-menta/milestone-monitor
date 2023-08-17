@@ -20,7 +20,7 @@ def dict_to_memory(memory_dict: List[dict], k=3) -> ConversationBufferWindowMemo
     current_ai_message = ""
 
     print(">>> Memory buffer:")
-    print(buffer)
+    # print(buffer)
 
     for message in buffer:
         # Encountered a human message
