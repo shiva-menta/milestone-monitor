@@ -20,4 +20,9 @@ RUN pipenv install
 
 COPY . .
 
-CMD ["sh", "-c", "pipenv run gunicorn --bind 0.0.0.0:8000 -w 1 backend.wsgi"]
+# Development
+# CMD ["sh", "-c", "pipenv run gunicorn --bind 0.0.0.0:8000 -w 1 backend.wsgi"]
+
+# Production
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]

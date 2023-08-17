@@ -5,6 +5,10 @@ kill_signal = "SIGINT"
 kill_timeout = 5
 primary_region = "iad"
 
+[processes]
+web = "pipenv run gunicorn --bind 0.0.0.0:8000 -w 2 backend.wsgi"
+celery = "pipenv run celery -A backend worker --beat --concurrency 2"
+
 [env]
   PORT = "8000"
   PINECONE_ENV = "us-east1-gcp"
@@ -16,7 +20,7 @@ primary_region = "iad"
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ["web"]
 
 [[statics]]
   guest_path = "/code/static"
